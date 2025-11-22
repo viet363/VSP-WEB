@@ -1,25 +1,40 @@
-import React from 'react'
+import React from 'react';
+import { Route, Switch } from 'react-router-dom';
 
-import { Route, Switch } from 'react-router-dom'
-
-import Dashboard from '../pages/Dashboard'
-import Customers from '../pages/Customers'
-import Products from '../pages/Products'
-import Orders from '../pages/Orders'
-import Categorys from '../pages/Category'
-import Chats from '../pages/Chat'
+import ProtectedRoute from '../components/ProtectedRoute';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import Dashboard from '../pages/Dashboard';
+import Customers from '../pages/Customers';
+import Products from '../pages/Products';
+import Orders from '../pages/Orders';
+import Categorys from '../pages/Category';
+import Chats from '../pages/Chat';
+import Inventory from '../pages/Inventory';
+import InventoryExport from '../pages/InventoryExport';
+import InventoryImport from '../pages/InventoryImport';
+import InventoryLogs from '../pages/InventoryLogs';
+import Warehouses from '../pages/Warehouses';
 
 const Routes = () => {
     return (
         <Switch>
-            <Route path='/' exact component={Dashboard}/>
-            <Route path='/customers' component={Customers}/>
-            <Route path='/products' component={Products}/>
-            <Route path='/orders' component={Orders}/>
-            <Route path='/categories' component={Categorys}/>
-            <Route path='/chats' component={Chats}/>
-        </Switch>
-    )
-}
+            <Route path="/login" component={Login} />
+            <Route path="/register" component={Register} />
 
-export default Routes
+            <ProtectedRoute path="/dashboard" exact component={Dashboard} />
+            <ProtectedRoute path="/customers" component={Customers} />
+            <ProtectedRoute path="/products" component={Products} />
+            <ProtectedRoute path="/orders" component={Orders} />
+            <ProtectedRoute path="/categories" component={Categorys} />
+            <ProtectedRoute path="/chats" component={Chats} />
+            <ProtectedRoute path="/inventory" component={Inventory} />
+            <ProtectedRoute path="/inventoryexport" component={InventoryExport} />
+            <ProtectedRoute path="/inventoryimport" component={InventoryImport} />
+            <ProtectedRoute path="/inventorylogs" component={InventoryLogs} />
+            <ProtectedRoute path="/warehouses" component={Warehouses} />
+        </Switch>
+    );
+};
+
+export default Routes;
