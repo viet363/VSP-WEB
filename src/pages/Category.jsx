@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Table from '../components/table/Table';
-import { database } from '../components/Firebase/firebaseConfig';
-import { ref, onValue, set, remove } from 'firebase/database';
+import api from '../api';
 
 const categoryTableHead = [
     'STT',
@@ -18,47 +17,45 @@ const Categories = () => {
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
-    const [category, setCategory] = useState({ id: '', title: '', picUrl: '' });
+    const [category, setCategory] = useState({ Category_name: '', picUrl: '' });
 
     useEffect(() => {
-        const categoriesRef = ref(database, 'Category');
-        const unsubscribe = onValue(categoriesRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (data) {
-                    const list = Object.entries(data)
-                        .map(([key, value]) => ({ id: key, ...value }))
-                        .sort((a, b) => parseInt(a.id) - parseInt(b.id));
-                    setCategories(list);
-                }
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
-            }
-        });
-        return () => unsubscribe();
+        fetchCategories();
     }, []);
 
+    const fetchCategories = async () => {
+        try {
+            const response = await api.get('/categories');
+            setCategories(response.data);
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
     const handleAdd = () => {
-        const maxId = categories.reduce((max, c) => Math.max(max, parseInt(c.id)), 0);
-        setCategory({ id: (maxId + 1).toString(), title: '', picUrl: '' });
+        setCategory({ Category_name: '', picUrl: '' });
         setEditMode(false);
         setShowForm(true);
     };
 
     const handleEdit = (item) => {
-        setCategory(item);
-        setCurrentId(item.id);
+        setCategory({ Category_name: item.Category_name, picUrl: item.picUrl });
+        setCurrentId(item.Id);
         setEditMode(true);
         setShowForm(true);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Bạn có chắc muốn xóa danh mục này?')) {
-            remove(ref(database, `Category/${id}`))
-                .then(() => alert('Xóa thành công!'))
-                .catch((e) => alert('Lỗi khi xóa: ' + e.message));
+            try {
+                await api.delete(`/categories/${id}`);
+                alert('Xóa thành công!');
+                fetchCategories();
+            } catch (err) {
+                alert('Lỗi khi xóa: ' + err.response?.data?.error || err.message);
+            }
         }
     };
 
@@ -67,30 +64,38 @@ const Categories = () => {
         setCategory({ ...category, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!category.title || !category.picUrl) {
+        if (!category.Category_name || !category.picUrl) {
             alert('Vui lòng nhập đầy đủ thông tin.');
             return;
         }
-        set(ref(database, `Category/${category.id}`), category)
-            .then(() => {
-                alert(editMode ? 'Cập nhật danh mục thành công!' : 'Thêm danh mục thành công!');
-                setShowForm(false);
-            })
-            .catch((e) => alert('Lỗi khi lưu: ' + e.message));
+
+        try {
+            if (editMode) {
+                await api.put(`/categories/${currentId}`, category);
+                alert('Cập nhật danh mục thành công!');
+            } else {
+                await api.post('/categories', category);
+                alert('Thêm danh mục thành công!');
+            }
+            setShowForm(false);
+            fetchCategories();
+        } catch (err) {
+            alert('Lỗi khi lưu: ' + err.response?.data?.error || err.message);
+        }
     };
 
     const renderHead = (item, index) => <th key={index}>{item}</th>;
     const renderBody = (item, index) => (
         <tr key={index}>
             <td>{index + 1}</td>
-            <td>{item.id}</td>
-            <td>{item.title}</td>
+            <td>{item.Id}</td>
+            <td>{item.Category_name}</td>
             <td><img src={item.picUrl} alt="category" style={{ width: 50, height: 50 }} /></td>
             <td>
                 <button className="btn-edit" onClick={() => handleEdit(item)}>Sửa</button>
-                <button className="btn-delete" onClick={() => handleDelete(item.id)}>Xóa</button>
+                <button className="btn-delete" onClick={() => handleDelete(item.Id)}>Xóa</button>
             </td>
         </tr>
     );
@@ -109,11 +114,8 @@ const Categories = () => {
                 <div className="add-form">
                     <h3>{editMode ? 'Sửa danh mục' : 'Thêm danh mục mới'}</h3>
                     <form onSubmit={handleSubmit}>
-                        <label>ID:</label>
-                        <input type="text" name="id" value={category.id} disabled />
-
                         <label>Tên danh mục:</label>
-                        <input type="text" name="title" value={category.title} onChange={handleChange} required />
+                        <input type="text" name="Category_name" value={category.Category_name} onChange={handleChange} required />
 
                         <label>URL hình ảnh:</label>
                         <input type="text" name="picUrl" value={category.picUrl} onChange={handleChange} required />

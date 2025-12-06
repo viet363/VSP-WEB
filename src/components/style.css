@@ -172,7 +172,7 @@
 
 /* Card styling */
 .card {
-  background: white;
+  background: 2d3748;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
@@ -275,4 +275,21 @@ textarea:focus {
 
 .form-group select::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+.card.form-group {
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: #edf2f7;
+}
+.add-form label {
+  color: white; 
+}
+
+.add-form input,
+.add-form textarea {
+  color: white; 
+  background-color: #333; 
+  border: 1px solid #555; 
+  padding: 5px;
+  border-radius: 4px;
 }

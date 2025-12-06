@@ -7,7 +7,7 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const history = useHistory(); // <-- dùng để chuyển trang
+    const history = useHistory();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -20,17 +20,25 @@ const Login = () => {
 
             setSuccess("Đăng nhập thành công!");
 
-            // Lưu user vào localStorage
-            localStorage.setItem("admin_user", JSON.stringify(res.data));
+            // ================================
+            // 📌 LƯU TOKEN VÀ THÔNG TIN ADMIN
+            // ================================
+            localStorage.setItem("token", res.data.token);
+            localStorage.setItem("admin_user", JSON.stringify(res.data.user));
 
-            // Delay để người dùng thấy thông báo
+            // ================================
+            // 📌 CHUYỂN TRANG SAU 1 GIÂY
+            // ================================
             setTimeout(() => {
-                history.push("/dashboard"); // <-- chuyển trang v5
+                history.push("/dashboard");
             }, 800);
 
         } catch (err) {
             console.error("Axios Error:", err);
-            setError(err.response?.data?.message || "Sai tài khoản hoặc mật khẩu!");
+            setError(
+                err.response?.data?.message ||
+                "Sai tài khoản hoặc mật khẩu!"
+            );
         }
     };
 
@@ -59,6 +67,7 @@ const Login = () => {
                 {success && <p className="success">{success}</p>}
 
                 <button type="submit">Đăng nhập</button>
+
                 <p>
                     Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
                 </p>

@@ -44,20 +44,24 @@ export default function Warehouses() {
     fetch();
   };
 
-  const renderBody = (item, index) => (
-    <tr key={item.Id}>
-      <td>{index + 1}</td>
-      <td>{item.Id}</td>
-      <td>{item.Warehouse_name}</td>
-      <td>{item.Location}</td>
-      <td style={{ maxWidth: 220 }}>{item.Description}</td>
-      <td>{item.UserId || ''}</td>
-      <td>
-        <button className="btn" onClick={() => { setEditing(item.Id); setForm({ Warehouse_name: item.Warehouse_name, Location: item.Location, Description: item.Description, UserId: item.UserId }); }}>Sửa</button>
-        <button className="btn btn-delete" onClick={() => remove(item.Id)}>Xóa</button>
-      </td>
-    </tr>
-  );
+const renderBody = (item, index) => (
+  <tr key={item.Id}>
+    <td>{index + 1}</td>
+    <td>{item.Id}</td>
+    <td style={{ color: 'white' }}>{item.Warehouse_name}</td>
+    <td style={{ color: 'white' }}>{item.Location}</td>
+    <td style={{ maxWidth: 220, color: 'white' }}>{item.Description}</td>
+    <td>{item.UserId || ''}</td>
+    <td>
+      <button className="btn" onClick={() => {
+        setEditing(item.Id);
+        setForm({ Warehouse_name: item.Warehouse_name, Location: item.Location, Description: item.Description, UserId: item.UserId });
+      }}>Sửa</button>
+      <button className="btn btn-delete" onClick={() => remove(item.Id)}>Xóa</button>
+    </td>
+  </tr>
+);
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -70,7 +74,7 @@ export default function Warehouses() {
       <div className="card add-form">
         <h3>{editing ? 'Sửa kho' : 'Thêm kho mới'}</h3>
         <form onSubmit={submit}>
-          <div className="form-group">
+          <div className="form-group ">
             <label>Tên kho</label>
             <input required value={form.Warehouse_name} onChange={e=>setForm({...form, Warehouse_name: e.target.value})}/>
           </div>

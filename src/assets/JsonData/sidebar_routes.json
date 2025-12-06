@@ -1,7 +1,7 @@
 [
     {
         "display_name": "Dashboard",
-        "route": "/",
+        "route": "/dashboard",
         "icon": "bx bx-category-alt"
     },
     {
@@ -9,10 +9,8 @@
         "route": "/customers",
         "icon": "bx bx-user-pin"
     },
-    
-  
     {
-        "display_name": "categories",
+        "display_name": "Categories",
         "route": "/categories",
         "icon": "bx bx-list-ol" 
     },
@@ -26,11 +24,34 @@
         "route": "/orders",
         "icon": "bx bx-cart"
     },
-   
     {
         "display_name": "Chats",
         "route": "/chats",
         "icon": "bx bx-chat"
-
+    },
+    {
+        "display_name": "Inventory",
+        "route": "/inventory",
+        "icon": "bx bx-archive"
+    },
+    {
+        "display_name": "Inventory Export",
+        "route": "/inventoryexport",
+        "icon": "bx bx-export"
+    },
+    {
+        "display_name": "Inventory Import",
+        "route": "/inventoryimport",
+        "icon": "bx bx-import"
+    },
+    {
+        "display_name": "Inventory Logs",
+        "route": "/inventorylogs",
+        "icon": "bx bx-file"
+    },
+    {
+        "display_name": "Warehouses",
+        "route": "/warehouses",
+        "icon": "bx bx-buildings"
     }
 ]

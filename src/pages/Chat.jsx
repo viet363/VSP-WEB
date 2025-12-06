@@ -1,337 +1,229 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { database } from '../components/Firebase/firebaseConfig';
-import { ref, onValue, push, set } from 'firebase/database';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import axios from "axios";
+
+const API_BASE_URL = "http://localhost:4000/api/chat";
 
 const Chat = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [unreadUsers, setUnreadUsers] = useState({});
+  const [newMessage, setNewMessage] = useState("");
+  const [adminId, setAdminId] = useState(null);
+
   const messagesEndRef = useRef(null);
 
-  // Fetch users
-  useEffect(() => {
-    const usersRef = ref(database, 'Users');
-    const unsubscribe = onValue(usersRef, (snapshot) => {
-      const usersData = snapshot.val();
-      if (usersData) {
-        const usersList = Object.keys(usersData).map(key => ({
-          id: key,
-          ...usersData[key]
-        }));
-        setUsers(usersList);
+  const token = localStorage.getItem("token");
+
+  // =====================================================
+  // 📌 Hàm chung để gửi kèm header token
+  // =====================================================
+  const authHeader = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+
+  // =====================================================
+  // 📌 1. Lấy danh sách user
+  // =====================================================
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/users`, authHeader);
+
+      if (res.data.success) {
+        setUsers(res.data.data);
+        setAdminId(res.data.adminId);
       }
-    });
+    } catch (err) {
+      console.error("Load users error:", err?.response?.data || err);
+    }
+  }, [token]);
 
-    return () => unsubscribe();
-  }, []);
+  // =====================================================
+  // 📌 2. Lấy tin nhắn của user
+  // =====================================================
+  const fetchMessages = useCallback(
+    async (userId) => {
+      try {
+        const res = await axios.get(
+          `${API_BASE_URL}/user/${userId}`,
+          authHeader
+        );
 
-  // Fetch unread state for users
-  useEffect(() => {
-    const usersRef = ref(database, 'Users');
-    const unsubscribe = onValue(usersRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const newUnread = {};
-        for (let key in data) {
-          const chats = data[key]?.chats;
-          if (chats) {
-            const lastMsgKey = Object.keys(chats).pop();
-            const lastMsg = chats[lastMsgKey];
-            if (lastMsg?.senderId === '1') {
-              newUnread[key] = true;
-            }
-          }
+        if (res.data.success) {
+          setMessages(res.data.data);
         }
-        setUnreadUsers(newUnread);
+      } catch (err) {
+        console.error("Load messages error:", err?.response?.data || err);
       }
-    });
+    },
+    [token]
+  );
 
-    return () => unsubscribe();
-  }, []);
-
-  // Fetch messages
+  // =====================================================
+  // 📌 3. Tải danh sách người dùng khi mở trang
+  // =====================================================
   useEffect(() => {
-    if (selectedUser) {
-      const messagesRef = ref(database, `Users/${selectedUser.id}/chats`);
-      const unsubscribe = onValue(messagesRef, (snapshot) => {
-        const messagesData = snapshot.val();
-        if (messagesData) {
-          const messagesList = Object.keys(messagesData).map(key => ({
-            id: key,
-            ...messagesData[key]
-          }));
-          setMessages(messagesList);
-        } else {
-          setMessages([]);
-        }
+    fetchUsers();
+  }, [fetchUsers]);
 
-        // Đánh dấu là đã đọc
-        setUnreadUsers(prev => {
-          const updated = { ...prev };
-          delete updated[selectedUser.id];
-          return updated;
-        });
-      });
-
-      return () => unsubscribe();
-    }
-  }, [selectedUser]);
-
-  // Auto-scroll
+  // =====================================================
+  // 📌 4. Tải tin nhắn khi chọn user
+  // =====================================================
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (selectedUser) fetchMessages(selectedUser.Id);
+  }, [selectedUser, fetchMessages]);
+
+  // =====================================================
+  // 📌 5. Auto scroll xuống cuối tin nhắn
+  // =====================================================
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === '' || !selectedUser) return;
+  // =====================================================
+  // 📌 6. Gửi tin nhắn
+  // =====================================================
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedUser) return;
 
-    const messagesRef = ref(database, `Users/${selectedUser.id}/chats`);
-    const newMessageRef = push(messagesRef);
+    try {
+      await axios.post(
+        `${API_BASE_URL}/admin/send`,
+        {
+          userId: selectedUser.Id,
+          message: newMessage,
+        },
+        authHeader
+      );
 
-    set(newMessageRef, {
-      messageText: newMessage,
-      senderId: '2',
-      senderName: 'SHOP',
-      timestamp: Date.now()
-    });
+      setNewMessage("");
 
-    setNewMessage('');
+      fetchMessages(selectedUser.Id);
+      fetchUsers();
+    } catch (err) {
+      console.error("Send message error:", err?.response?.data || err);
+    }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
-    }
+    if (e.key === "Enter") sendMessage();
   };
 
+  // =====================================================
+  // 📌 Nếu chưa có token → chưa login admin
+  // =====================================================
+  if (!token) {
+    return <h3>Bạn chưa đăng nhập admin</h3>;
+  }
+
   return (
-    <div className="chat-container">
-      <div className="user-list">
-        <h2>Users</h2>
-        <ul>
-          {users.map(user => (
-            <li
-              key={user.id}
-              className={selectedUser?.id === user.id ? 'active' : ''}
-              onClick={() => setSelectedUser(user)}
-            >
-              <div className="user-info">
-                <span className="user-name">
-                  {user.profile_name}
-                  {unreadUsers[user.id] && <span className="unread-dot" />}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+    <div style={{ display: "flex", height: "100vh" }}>
+      {/* ================= USER LIST ================ */}
+      <div style={{ width: 300, borderRight: "1px solid #333", padding: 10 }}>
+        <h3>Người dùng</h3>
+
+        {users.length === 0 && <p>Không có người dùng nào</p>}
+
+        {users.map((user) => (
+          <div
+            key={user.Id}
+            onClick={() => setSelectedUser(user)}
+            style={{
+              padding: 12,
+              marginBottom: 10,
+              borderRadius: 6,
+              cursor: "pointer",
+              background: selectedUser?.Id === user.Id ? "#4b82e0" : "#222",
+              color: "white",
+            }}
+          >
+            <strong>{user.Fullname || user.Username}</strong>
+
+            {user.UnreadCount > 0 && (
+              <span style={{ color: "red", marginLeft: 5 }}>
+                ({user.UnreadCount})
+              </span>
+            )}
+          </div>
+        ))}
       </div>
 
-      <div className="chat-area">
-        {selectedUser ? (
+      {/* ================= CHAT AREA ================ */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {!selectedUser ? (
+          <div style={{ padding: 20 }}>Chọn người dùng để bắt đầu chat</div>
+        ) : (
           <>
-            <div className="chat-header">
-              <h2>Chat with {selectedUser.auth_email}</h2>
+            <div style={{ padding: 15, background: "#444", color: "white" }}>
+              Chat với {selectedUser.Fullname || selectedUser.Username}
             </div>
 
-            <div className="messages">
-              {messages.length > 0 ? (
-                messages.map(message => (
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: 20,
+                background: "#111",
+                color: "white",
+              }}
+            >
+              {messages.map((msg) => (
+                <div
+                  key={msg.Id}
+                  style={{
+                    textAlign: msg.SenderId === adminId ? "right" : "left",
+                    marginBottom: 14,
+                  }}
+                >
                   <div
-                    key={message.id}
-                    className={`message ${message.senderId === '1' ? 'left' : 'right'}`}
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      maxWidth: "65%",
+                      background:
+                        msg.SenderId === adminId ? "#2ecc71" : "#333",
+                    }}
                   >
-                    <div className="message-content">
-                      <span className="message-sender">{message.senderName}</span>
-                      <p>{message.messageText}</p>
-                    </div>
+                    {msg.Message}
                   </div>
-                ))
-              ) : (
-                <div className="no-messages">
-                  <p>No messages yet. Start the conversation!</p>
                 </div>
-              )}
+              ))}
+
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="message-input">
+            <div style={{ padding: 10, display: "flex", gap: 10 }}>
               <input
-                type="text"
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 20,
+                  border: "1px solid #666",
+                  background: "#222",
+                  color: "white",
+                }}
+                placeholder="Nhập tin nhắn..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
+                onKeyDown={handleKeyPress}
               />
-              <button onClick={handleSendMessage}>Send</button>
+              <button
+                onClick={sendMessage}
+                style={{
+                  padding: "12px 18px",
+                  background: "#3498db",
+                  border: "none",
+                  borderRadius: 20,
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                Gửi
+              </button>
             </div>
           </>
-        ) : (
-          <div className="no-user-selected">
-            <p>Select a user to start chatting</p>
-          </div>
         )}
       </div>
-
-      <style jsx>{`
-        .chat-container {
-          display: flex;
-          height: 100vh;
-        }
-
-        .user-list {
-          width: 300px;
-          background-color: #f5f5f5;
-          border-right: 1px solid #ddd;
-          overflow-y: auto;
-        }
-
-        .user-list h2 {
-          padding: 15px;
-          margin: 0;
-          background-color: #2c3e50;
-          color: white;
-        }
-
-        .user-list ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .user-list li {
-          padding: 15px;
-          border-bottom: 1px solid #ddd;
-          cursor: pointer;
-        }
-
-        .user-list li:hover {
-          background-color: #e9e9e9;
-        }
-
-        .user-list li.active {
-          background-color: #3498db;
-          color: white;
-        }
-
-        .user-info {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .user-name {
-          font-weight: bold;
-          position: relative;
-        }
-
-        .unread-dot {
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          background-color: red;
-          border-radius: 50%;
-          margin-left: 8px;
-        }
-
-        .chat-area {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .chat-header {
-          padding: 15px;
-          background-color: #2c3e50;
-          color: white;
-        }
-
-        .messages {
-          flex: 1;
-          padding: 20px;
-          overflow-y: auto;
-          background-color: #e5ddd5;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .message {
-          margin-bottom: 15px;
-          max-width: 70%;
-        }
-
-        .message-content {
-          padding: 10px 15px;
-          border-radius: 18px;
-          position: relative;
-        }
-
-        .message.left {
-          margin-right: auto;
-        }
-
-        .message.right {
-          margin-left: auto;
-        }
-
-        .message.left .message-content {
-          background-color: white;
-        }
-
-        .message.right .message-content {
-          background-color: #dcf8c6;
-        }
-
-        .message-sender {
-          font-size: 0.75em;
-          font-weight: bold;
-          margin-bottom: 4px;
-          display: block;
-        }
-
-        .message-input {
-          padding: 15px;
-          background-color: #f5f5f5;
-          display: flex;
-        }
-
-        .message-input input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 20px;
-          outline: none;
-        }
-
-        .message-input button {
-          margin-left: 10px;
-          padding: 10px 20px;
-          background-color: #2c3e50;
-          color: white;
-          border: none;
-          border-radius: 20px;
-          cursor: pointer;
-        }
-
-        .no-user-selected {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background-color: #e5ddd5;
-        }
-
-        .no-messages {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          color: #666;
-        }
-      `}</style>
     </div>
   );
 };

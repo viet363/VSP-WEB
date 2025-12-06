@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import Table from '../components/table/Table';
-import { database } from '../components/Firebase/firebaseConfig';
-import { ref, onValue, update } from 'firebase/database';
+import api from '../api';
 
-const customerTableHead = [
+const orderTableHead = [
     'STT',
     'Mã đơn',
-    'Tên sản phẩm',
-    'Số lượng',
-    'Tổng giá',
-    'Tên khách hàng',
-    'SĐT',
-    'Địa chỉ',
-    'Trạng thái'
+    'Khách hàng',
+    'Tổng tiền',
+    'Ngày đặt',
+    'Trạng thái',
+    'Phương thức thanh toán',
+    'Hành động'
 ];
 
 const Orders = () => {
@@ -21,87 +19,30 @@ const Orders = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const usersRef = ref(database, 'Users');
-
-        const unsubscribe = onValue(usersRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (data) {
-                    const allOrders = [];
-
-                    Object.entries(data).forEach(([userId, userData]) => {
-                        if (userData.orders) {
-                            Object.entries(userData.orders).forEach(([orderId, order]) => {
-                                if (order.items && Array.isArray(order.items)) {
-                                    order.items.forEach(item => {
-                                        allOrders.push({
-                                            id: orderId,
-                                            userId: userId,
-                                            productId: item.id,
-                                            productTitle: item.title,
-                                            quantity: item.numberInCart,
-                                            total: order.total,
-                                            customerName: userData.profile_name,
-                                            customerPhone: userData.phone,
-                                            customerAddress: userData.address,
-                                            status: order.status,
-                                            createdAt: order.createdAt || Date.now() 
-                                        });
-                                    });
-                                }
-                            });
-                        }
-                    });
-
-                    setOrders(allOrders);
-
-                    allOrders.forEach(order => {
-                        if (!order.status || !order.createdAt) return;
-
-                        const now = Date.now();
-                        const timeDiff = now - order.createdAt; // mili giây
-                        const oneDay = 24 * 60 * 60 * 1000;
-
-                        let newStatus = order.status;
-
-                        if (order.status === "Chờ xử lý" && timeDiff > oneDay) {
-                            newStatus = "Đang giao";
-                        } else if (order.status === "Đang giao" && timeDiff > 3 * oneDay) {
-                            newStatus = "Đã giao";
-                        }
-
-                        if (newStatus !== order.status) {
-                            const orderRef = ref(database, `Users/${order.userId}/orders/${order.id}`);
-                            update(orderRef, { status: newStatus });
-                        }
-                    });
-                }
-
-                setLoading(false);
-            } catch (err) {
-                console.error("Error reading orders:", err);
-                setError(err.message);
-                setLoading(false);
-            }
-        });
-
-        return () => unsubscribe();
+        fetchOrders();
     }, []);
 
-    const handleStatusChange = (userId, orderId, newStatus) => {
-        const orderRef = ref(database, `Users/${userId}/orders/${orderId}`);
-        update(orderRef, { status: newStatus })
-            .then(() => {
-                const updatedOrders = orders.map(order =>
-                    order.userId === userId && order.id === orderId
-                        ? { ...order, status: newStatus }
-                        : order
-                );
-                setOrders(updatedOrders);
-            })
-            .catch(error => {
-                console.error("Lỗi khi cập nhật trạng thái:", error);
-            });
+    const fetchOrders = async () => {
+        try {
+            const response = await api.get('/orders');
+            setOrders(response.data);
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    const handleStatusChange = async (orderId, newStatus) => {
+        try {
+            await api.put(`/orders/${orderId}`, { Order_status: newStatus });
+            // Update local state
+            setOrders(orders.map(order => 
+                order.Id === orderId ? { ...order, Order_status: newStatus } : order
+            ));
+        } catch (err) {
+            alert('Lỗi khi cập nhật trạng thái: ' + err.response?.data?.error || err.message);
+        }
     };
 
     const renderHead = (item, index) => <th key={index}>{item}</th>;
@@ -109,23 +50,36 @@ const Orders = () => {
     const renderBody = (item, index) => (
         <tr key={index}>
             <td>{index + 1}</td>
-            <td>{item.id || ''}</td>
-            <td>{item.productTitle || 'Không có tên'}</td>
-            <td>{item.quantity || 'Không có số lượng'}</td>
-            <td>{item.total ? `${item.total.toLocaleString()} VND` : '0 VND'}</td>
-            <td>{item.customerName || 'Không có tên'}</td>
-            <td>{item.customerPhone || 'Không có SDT'}</td>
-            <td>{item.customerAddress || 'Không có địa chỉ'}</td>
+            <td>#{item.Id}</td>
+            <td>{item.customer_name || 'Không có tên'}</td>
+            <td>{parseFloat(item.total_amount || 0).toLocaleString()} VND</td>
+            <td>{new Date(item.Order_date).toLocaleDateString('vi-VN')}</td>
             <td>
                 <select
-                    value={item.status}
-                    onChange={(e) => handleStatusChange(item.userId, item.id, e.target.value)}
+                    value={item.Order_status}
+                    onChange={(e) => handleStatusChange(item.Id, e.target.value)}
+                    style={{
+                        padding: '5px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd'
+                    }}
                 >
-                    <option value="Chờ xử lý">Chờ xử lý</option>
-                    <option value="Đang giao">Đang giao</option>
-                    <option value="Đã giao">Đã giao</option>
-                    <option value="Đã huỷ">Đã huỷ</option>
+                    <option value="Pending">Chờ xử lý</option>
+                    <option value="Processing">Đang xử lý</option>
+                    <option value="Shipped">Đang giao</option>
+                    <option value="Delivered">Đã giao</option>
+                    <option value="Cancelled">Đã huỷ</option>
+                    <option value="Returned">Trả hàng</option>
                 </select>
+            </td>
+            <td>{item.Payment_type}</td>
+            <td>
+                <button 
+                    className="btn-view" 
+                    onClick={() => alert(`Chi tiết đơn hàng #${item.Id}`)}
+                >
+                    Xem
+                </button>
             </td>
         </tr>
     );
@@ -138,8 +92,8 @@ const Orders = () => {
             <h2 className="page-header">Đơn hàng</h2>
 
             <div style={{ marginBottom: '16px' }}>
-                <button onClick={() => window.location.reload()} className="btn btn-refresh">
-                    🔄 Reset lại
+                <button onClick={fetchOrders} className="btn btn-refresh">
+                    🔄 Làm mới
                 </button>
             </div>
 
@@ -149,7 +103,7 @@ const Orders = () => {
                         <div className="card__body">
                             <Table
                                 limit="10"
-                                headData={customerTableHead}
+                                headData={orderTableHead}
                                 renderHead={renderHead}
                                 bodyData={orders}
                                 renderBody={renderBody}
@@ -158,6 +112,27 @@ const Orders = () => {
                     </div>
                 </div>
             </div>
+
+            <style jsx>{`
+                .btn-view {
+                    background: #4caf50;
+                    color: white;
+                    padding: 5px 10px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                .btn-view:hover { background: #45a049; }
+                .btn-refresh {
+                    background: #2196f3;
+                    color: white;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                .btn-refresh:hover { background: #1976d2; }
+            `}</style>
         </div>
     );
 };

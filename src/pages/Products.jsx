@@ -1,336 +1,315 @@
 import React, { useEffect, useState } from 'react';
 import Table from '../components/table/Table';
-import { database } from '../components/Firebase/firebaseConfig';
-import { ref, onValue, set, remove } from 'firebase/database';
+import api from '../api';
 
 const productTableHead = [
     'STT',
     'ID',
-    'Tên',
-    'Số lượng',
-    'Loại',
-    'Hình ảnh',
-    'Mô tả',
+    'Tên sản phẩm',
     'Giá',
-    'Đánh giá',
-    'Đề xuất',
+    'Trạng thái',
+    'Hình ảnh',
+    'Danh mục',
     'Hành động'
 ];
 
+// Component xử lý lỗi hình ảnh
+const ImageWithFallback = ({ src, alt, ...props }) => {
+    const [imgError, setImgError] = useState(false);
+
+    if (imgError || !src) {
+        return <span style={{ color: '#aaa', fontStyle: 'italic' }}>No image</span>;
+    }
+
+    return (
+        <img 
+            src={src} 
+            alt={alt}
+            onError={() => setImgError(true)}
+            {...props}
+        />
+    );
+};
+
 const Products = () => {
-    const [items, setItems] = useState([]);
+    const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [showAddForm, setShowAddForm] = useState(false);
+    const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
-    const [newProduct, setNewProduct] = useState({
-        id: '',
-        title: '',
-        model: [],
-        picUrl: [],
-        description: '',
-        price: '',
-        rating: '',
-        quantity: 1,
-        categoryId: '',
-        showRecommended: false
+    const [currentId, setCurrentId] = useState(null);
+    const [product, setProduct] = useState({
+        Product_name: '',
+        Price: '',
+        Product_status: 'Draft',
+        picUrl: '',
+        CategoryId: '',
+        Description: '',
+        model: ''
     });
-    const [tempModel, setTempModel] = useState('');
-    const [tempPicUrl, setTempPicUrl] = useState('');
 
-    const renderHead = (item, index) => <th key={index}>{item}</th>;
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-    const renderBody = (item, index) => (
-        <tr key={index}>
-            <td>{index + 1}</td>
-            <td>{item.id}</td>
-            <td>{item.title}</td>
-            <td>{item.quantity || 0}</td>
-            <td>{item.model?.join(', ')}</td>
-            <td>
-                {item.picUrl?.map((url, idx) => (
-                    <img key={idx} src={url} alt="item" style={{ width: '50px', marginRight: '5px' }} />
-                ))}
-            </td>
-            <td>{item.description}</td>
-            <td>{item.price}</td>
-            <td>{item.rating}</td>
-            <td>{item.showRecommended ? 'Có' : 'Không'}</td>
-            <td>
-                <button className="btn-edit" onClick={() => handleEditProduct(item)}>Sửa</button>
-                <button className="btn-delete" onClick={() => handleDeleteProduct(item.id)}>Xóa</button>
-            </td>
-        </tr>
-    );
-
-    const handleEditProduct = (product) => {
-        setNewProduct(product);
-        setShowAddForm(true);
-        setEditMode(true);
-    };
-
-    const handleDeleteProduct = (productId) => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
-            const productRef = ref(database, `Items/${productId}`);
-            remove(productRef)
-                .then(() => {
-                    alert('Xóa sản phẩm thành công!');
-                })
-                .catch(error => {
-                    console.error("Error deleting product: ", error);
-                    alert('Có lỗi xảy ra khi xóa sản phẩm');
-                });
+    const fetchData = async () => {
+        try {
+            console.log('Fetching products and categories...');
+            const [productsRes, categoriesRes] = await Promise.all([
+                api.get('/products'),
+                api.get('/categories')
+            ]);
+            
+            console.log('Raw products data:', productsRes.data);
+            console.log('Categories data:', categoriesRes.data);
+            
+            // Đảm bảo dữ liệu không bị null/undefined
+            const processedProducts = productsRes.data.map(item => ({
+                ...item,
+                Product_name: item.Product_name || 'Không có tên',
+                Product_status: item.Product_status || 'Draft',
+                Category_name: item.Category_name || 'Chưa phân loại',
+                picUrl: item.picUrl || '',
+                Price: item.Price || 0
+            }));
+            
+            console.log('Processed products:', processedProducts);
+            
+            setProducts(processedProducts);
+            setCategories(categoriesRes.data);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            console.error('Error response:', err.response?.data);
+            setError(err.message);
+            setLoading(false);
         }
     };
 
-    const handleAddProduct = () => {
-        const maxId = items.reduce((max, item) => {
-            const itemId = parseInt(item.id);
-            return itemId > max ? itemId : max;
-        }, 0);
-        
-        setNewProduct({
-            id: (maxId + 1).toString(),
-            title: '',
-            model: [],
-            picUrl: [],
-            description: '',
-            price: '',
-            rating: '',
-            quantity: 1,
-            categoryId: '',
-            showRecommended: false
+    const handleAdd = () => {
+        setProduct({
+            Product_name: '',
+            Price: '',
+            Product_status: 'Draft',
+            picUrl: '',
+            CategoryId: '',
+            Description: '',
+            model: ''
         });
-        setShowAddForm(true);
         setEditMode(false);
+        setShowForm(true);
     };
 
-    const handleInputChange = (e) => {
+    const handleEdit = (item) => {
+        console.log('Editing product:', item);
+        setProduct({
+            Product_name: item.Product_name || '',
+            Price: item.Price || '',
+            Product_status: item.Product_status || 'Draft',
+            picUrl: item.picUrl || '',
+            CategoryId: item.CategoryId || '',
+            Description: item.Description || '',
+            model: item.model || ''
+        });
+        setCurrentId(item.Id);
+        setEditMode(true);
+        setShowForm(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+            try {
+                await api.delete(`/products/${id}`);
+                alert('Xóa thành công!');
+                fetchData();
+            } catch (err) {
+                alert('Lỗi khi xóa: ' + (err.response?.data?.error || err.message));
+            }
+        }
+    };
+
+    const handleChange = (e) => {
         const { name, value } = e.target;
-        setNewProduct({
-            ...newProduct,
-            [name]: value
-        });
+        setProduct({ ...product, [name]: value });
     };
 
-    const handleCheckboxChange = (e) => {
-        const { name, checked } = e.target;
-        setNewProduct({
-            ...newProduct,
-            [name]: checked
-        });
-    };
-
-    const addModel = () => {
-        if (tempModel.trim()) {
-            setNewProduct({
-                ...newProduct,
-                model: [...newProduct.model, tempModel]
-            });
-            setTempModel('');
-        }
-    };
-
-    const addPicUrl = () => {
-        if (tempPicUrl.trim()) {
-            setNewProduct({
-                ...newProduct,
-                picUrl: [...newProduct.picUrl, tempPicUrl]
-            });
-            setTempPicUrl('');
-        }
-    };
-
-    const removeModel = (index) => {
-        const updatedModels = newProduct.model.filter((_, i) => i !== index);
-        setNewProduct({
-            ...newProduct,
-            model: updatedModels
-        });
-    };
-
-    const removePicUrl = (index) => {
-        const updatedPicUrls = newProduct.picUrl.filter((_, i) => i !== index);
-        setNewProduct({
-            ...newProduct,
-            picUrl: updatedPicUrls
-        });
-    };
-
-    const submitProduct = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!newProduct.title || !newProduct.price || !newProduct.categoryId) {
-            alert('Vui lòng điền đầy đủ thông tin bắt buộc (Tên, Giá, Danh mục)');
+        if (!product.Product_name || !product.Price || !product.CategoryId) {
+            alert('Vui lòng nhập đầy đủ thông tin bắt buộc.');
             return;
         }
 
-        const productToSubmit = {
-            ...newProduct,
-            price: parseFloat(newProduct.price),
-            rating: newProduct.rating ? parseFloat(newProduct.rating) : 0,
-            quantity: parseInt(newProduct.quantity) || 1,
-            categoryId: parseInt(newProduct.categoryId)
-        };
-
-        set(ref(database, `Items/${newProduct.id}`), productToSubmit)
-            .then(() => {
-                alert(editMode ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
-                setNewProduct({
-                    id: '',
-                    title: '',
-                    model: [],
-                    picUrl: [],
-                    description: '',
-                    price: '',
-                    rating: '',
-                    quantity: 1,
-                    categoryId: '',
-                    showRecommended: false
-                });
-                setShowAddForm(false);
-                setEditMode(false);
-            })
-            .catch(error => {
-                console.error("Error saving product: ", error);
-                alert('Có lỗi xảy ra khi lưu sản phẩm');
-            });
+        try {
+            if (editMode) {
+                await api.put(`/products/${currentId}`, product);
+                alert('Cập nhật sản phẩm thành công!');
+            } else {
+                await api.post('/products', product);
+                alert('Thêm sản phẩm thành công!');
+            }
+            setShowForm(false);
+            fetchData();
+        } catch (err) {
+            alert('Lỗi khi lưu: ' + (err.response?.data?.error || err.message));
+        }
     };
 
-    useEffect(() => {
-        const itemsRef = ref(database, 'Items');
-        const categoriesRef = ref(database, 'Category');
+    const renderHead = (item, index) => <th key={index}>{item}</th>;
+    
+    const renderBody = (item, index) => {
+        console.log('Rendering product item:', item);
         
-        const unsubscribeItems = onValue(itemsRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (data) {
-                    const itemList = Object.entries(data)
-                        .map(([key, value]) => ({
-                            id: key,
-                            ...value
-                        }))
-                        .sort((a, b) => parseInt(a.id) - parseInt(b.id));
-                    
-                    setItems(itemList);
-                }
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
-            }
-        });
+        // Đảm bảo không bị lỗi với giá trị null/undefined
+        const productName = item.Product_name || 'Không có tên';
+        const productStatus = item.Product_status || 'Draft';
+        const categoryName = item.Category_name || 'Chưa phân loại';
+        const price = parseFloat(item.Price || 0);
+        const imageUrl = item.picUrl;
 
-        const unsubscribeCategories = onValue(categoriesRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) setCategories(data);
-        });
+        return (
+            <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{item.Id}</td>
+                <td>{productName}</td>
+                <td>{price.toLocaleString('vi-VN')} VND</td>
+                <td>
+                    <span style={{
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        backgroundColor: 
+                            productStatus === 'Published' ? '#10b981' :
+                            productStatus === 'Draft' ? '#f59e0b' :
+                            productStatus === 'OutOfStock' ? '#ef4444' :
+                            productStatus === 'Archived' ? '#6b7280' : '#3b82f6',
+                        color: 'white'
+                    }}>
+                        {productStatus}
+                    </span>
+                </td>
+                <td>
+                    <ImageWithFallback 
+                        src={imageUrl}
+                        alt={productName}
+                        style={{ 
+                            width: 50, 
+                            height: 50, 
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            border: '1px solid #374151'
+                        }}
+                    />
+                </td>
+                <td>{categoryName}</td>
+                <td>
+                    <button className="btn-edit" onClick={() => handleEdit(item)}>Sửa</button>
+                    <button className="btn-delete" onClick={() => handleDelete(item.Id)}>Xóa</button>
+                </td>
+            </tr>
+        );
+    };
 
-        return () => {
-            unsubscribeItems();
-            unsubscribeCategories();
-        };
-    }, []);
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (loading) return <div style={{ color: '#e5e7eb', padding: '20px' }}>Loading...</div>;
+    if (error) return <div style={{ color: '#ef4444', padding: '20px' }}>Error: {error}</div>;
 
     return (
-        <div>
+        <div style={{ backgroundColor: '#111827', minHeight: '100vh', color: '#e5e7eb', padding: '20px' }}>
             <div className="page-header">
-                <h2>Products</h2>
-                <button className="btn btn-add_product" onClick={handleAddProduct}>
-                    + Thêm sản phẩm
-                </button>
+                <h2 style={{ color: '#f9fafb', margin: 0 }}>Sản phẩm</h2>
+                <button className="btn btn-add" onClick={handleAdd}>+ Thêm sản phẩm</button>
             </div>
 
-            {showAddForm && (
-                <div className="add-product-form">
-                    <h3>{editMode ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
-                    <form onSubmit={submitProduct}>
-                        <div className="form-group">
-                            <label>ID sản phẩm:</label>
-                            <input type="text" name="id" value={newProduct.id} onChange={handleInputChange} disabled />
-                        </div>
+            {showForm && (
+                <div className="add-form">
+                    <h3 style={{ color: '#f9fafb', marginTop: 0 }}>{editMode ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
+                    <form onSubmit={handleSubmit}>
+                        <label>Tên sản phẩm:</label>
+                        <input 
+                            type="text" 
+                            name="Product_name" 
+                            value={product.Product_name} 
+                            onChange={handleChange} 
+                            required 
+                            placeholder="Nhập tên sản phẩm"
+                        />
 
-                        <div className="form-group">
-                            <label>Tên sản phẩm:</label>
-                            <input type="text" name="title" value={newProduct.title} onChange={handleInputChange} required />
-                        </div>
+                        <label>Giá:</label>
+                        <input 
+                            type="number" 
+                            name="Price" 
+                            value={product.Price} 
+                            onChange={handleChange} 
+                            required 
+                            min="0" 
+                            step="0.01" 
+                            placeholder="Nhập giá sản phẩm"
+                        />
 
-                        <div className="form-group">
-                            <label>Số lượng:</label>
-                            <input type="number" name="quantity" value={newProduct.quantity} onChange={handleInputChange} required min="1" />
-                        </div>
+                        <label>Trạng thái:</label>
+                        <select name="Product_status" value={product.Product_status} onChange={handleChange}>
+                            <option value="Draft">Bản nháp</option>
+                            <option value="Published">Đã xuất bản</option>
+                            <option value="OutOfStock">Hết hàng</option>
+                            <option value="Archived">Đã lưu trữ</option>
+                        </select>
 
-                        <div className="form-group">
-                            <label>Danh mục:</label>
-                            <select name="categoryId" value={newProduct.categoryId} onChange={handleInputChange} required>
-                                <option value="">-- Chọn danh mục --</option>
-                                {Object.entries(categories).map(([key, category]) => (
-                                    <option key={key} value={category.id}>{category.title}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <label>Danh mục:</label>
+                        <select name="CategoryId" value={product.CategoryId} onChange={handleChange} required>
+                            <option value="">-- Chọn danh mục --</option>
+                            {categories.map(cat => (
+                                <option key={cat.Id} value={cat.Id}>{cat.Category_name}</option>
+                            ))}
+                        </select>
 
-                        <div className="form-group">
-                            <label>Loại sản phẩm:</label>
-                            <div className="input-group">
-                                <input type="text" value={tempModel} onChange={(e) => setTempModel(e.target.value)} />
-                                <button type="button" onClick={addModel}>Thêm</button>
+                        <label>URL hình ảnh:</label>
+                        <input 
+                            type="text" 
+                            name="picUrl" 
+                            value={product.picUrl} 
+                            onChange={handleChange} 
+                            placeholder="https://example.com/image.jpg"
+                        />
+
+                        <label>Mô tả:</label>
+                        <textarea 
+                            name="Description" 
+                            value={product.Description} 
+                            onChange={handleChange} 
+                            rows="3" 
+                            placeholder="Nhập mô tả sản phẩm"
+                        />
+
+                        <label>Model:</label>
+                        <input 
+                            type="text" 
+                            name="model" 
+                            value={product.model} 
+                            onChange={handleChange} 
+                            placeholder="Nhập model sản phẩm"
+                        />
+
+                        {product.picUrl && (
+                            <div>
+                                <label>Preview:</label>
+                                <ImageWithFallback 
+                                    src={product.picUrl}
+                                    alt="preview"
+                                    style={{ 
+                                        width: 100, 
+                                        marginTop: 10,
+                                        borderRadius: '4px',
+                                        border: '1px solid #374151'
+                                    }}
+                                />
                             </div>
-                            <div className="tag-container">
-                                {newProduct.model.map((model, index) => (
-                                    <span key={index} className="tag">
-                                        {model}
-                                        <button type="button" onClick={() => removeModel(index)}>×</button>
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Hình ảnh (URL):</label>
-                            <div className="input-group">
-                                <input type="text" value={tempPicUrl} onChange={(e) => setTempPicUrl(e.target.value)} />
-                                <button type="button" onClick={addPicUrl}>Thêm</button>
-                            </div>
-                            <div className="tag-container">
-                                {newProduct.picUrl.map((url, index) => (
-                                    <span key={index} className="tag">
-                                        <img src={url} alt="preview" style={{ width: '30px', height: '30px' }} />
-                                        <button type="button" onClick={() => removePicUrl(index)}>×</button>
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Mô tả:</label>
-                            <textarea name="description" value={newProduct.description} onChange={handleInputChange} />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Giá:</label>
-                            <input type="number" name="price" value={newProduct.price} onChange={handleInputChange} required min="0" />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Đánh giá (1-5):</label>
-                            <input type="number" name="rating" value={newProduct.rating} onChange={handleInputChange} min="1" max="5" step="0.1" />
-                        </div>
-
-                        <div className="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" name="showRecommended" checked={newProduct.showRecommended} onChange={handleCheckboxChange} />
-                                Hiển thị ở mục đề xuất
-                            </label>
-                        </div>
+                        )}
 
                         <div className="form-actions">
                             <button type="submit" className="btn-submit">Lưu</button>
-                            <button type="button" className="btn-cancel" onClick={() => setShowAddForm(false)}>Hủy</button>
+                            <button type="button" onClick={() => setShowForm(false)} className="btn-cancel">Hủy</button>
                         </div>
                     </form>
                 </div>
@@ -342,32 +321,189 @@ const Products = () => {
                         limit="10"
                         headData={productTableHead}
                         renderHead={renderHead}
-                        bodyData={items}
+                        bodyData={products}
                         renderBody={renderBody}
                     />
                 </div>
             </div>
 
             <style jsx>{`
+                .page-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                .btn-add {
+                    background: #10b981;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                .btn-add:hover {
+                    background: #059669;
+                    transform: translateY(-1px);
+                }
+                .add-form {
+                    background: #1f2937;
+                    padding: 24px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    border: 1px solid #374151;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                }
+                .add-form h3 {
+                    margin-top: 0;
+                    color: #f9fafb;
+                    border-bottom: 1px solid #374151;
+                    padding-bottom: 10px;
+                }
+                .add-form label {
+                    display: block;
+                    margin: 12px 0 6px;
+                    font-weight: 500;
+                    color: #e5e7eb;
+                }
+                .add-form input,
+                .add-form select,
+                .add-form textarea {
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #4b5563;
+                    border-radius: 6px;
+                    margin-bottom: 12px;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                    background: #374151;
+                    color: #e5e7eb;
+                    transition: all 0.2s;
+                }
+                .add-form input::placeholder,
+                .add-form textarea::placeholder {
+                    color: #9ca3af;
+                }
+                .add-form input:focus,
+                .add-form select:focus,
+                .add-form textarea:focus {
+                    border-color: #10b981;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+                }
+                .form-actions {
+                    margin-top: 24px;
+                    display: flex;
+                    gap: 12px;
+                }
+                .btn-submit {
+                    background: #10b981;
+                    color: white;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                .btn-submit:hover {
+                    background: #059669;
+                    transform: translateY(-1px);
+                }
+                .btn-cancel {
+                    background: #6b7280;
+                    color: white;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                .btn-cancel:hover {
+                    background: #4b5563;
+                    transform: translateY(-1px);
+                }
                 .btn-edit {
-                    background: #2196f3;
+                    background: #3b82f6;
                     color: white;
-                    padding: 5px 10px;
+                    padding: 6px 12px;
                     border: none;
                     border-radius: 4px;
                     cursor: pointer;
-                    margin-right: 5px;
+                    margin-right: 8px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    transition: all 0.2s;
                 }
-                .btn-edit:hover { background: #1976d2; }
+                .btn-edit:hover { 
+                    background: #2563eb;
+                    transform: translateY(-1px);
+                }
                 .btn-delete {
-                    background: #f44336;
+                    background: #ef4444;
                     color: white;
-                    padding: 5px 10px;
+                    padding: 6px 12px;
                     border: none;
                     border-radius: 4px;
                     cursor: pointer;
+                    font-size: 12px;
+                    font-weight: 500;
+                    transition: all 0.2s;
                 }
-                .btn-delete:hover { background: #d32f2f; }
+                .btn-delete:hover { 
+                    background: #dc2626;
+                    transform: translateY(-1px);
+                }
+                .card {
+                    background: #1f2937;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                    border: 1px solid #374151;
+                    overflow: hidden;
+                }
+                .card__body {
+                    padding: 0;
+                }
+
+                /* Style cho table */
+                :global(table) {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: #1f2937;
+                }
+
+                :global(th) {
+                    background: #374151;
+                    color: #f9fafb;
+                    padding: 12px;
+                    text-align: left;
+                    font-weight: 600;
+                    border-bottom: 1px solid #4b5563;
+                }
+
+                :global(td) {
+                    padding: 12px;
+                    border-bottom: 1px solid #374151;
+                    color: #e5e7eb;
+                }
+
+                :global(tr:hover) {
+                    background: #374151;
+                }
+
+                :global(tr:nth-child(even)) {
+                    background: #1f2937;
+                }
+
+                :global(tr:nth-child(even):hover) {
+                    background: #374151;
+                }
             `}</style>
         </div>
     );

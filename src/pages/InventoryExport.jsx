@@ -107,12 +107,10 @@ export default function InventoryExport() {
               <option value="">--Chọn SP--</option>
               {products.map(p => (
                 <option key={p.Id} value={p.Id}>
-                  {/* Sửa ở đây: dùng p.Title thay vì p.Product_name */}
                   {p.Title || p.Product_name}
                 </option>
               ))}
             </select>
-            {/* Hiển thị debug info */}
             {products.length > 0 && (
               <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
                 Đã tải {products.length} sản phẩm. Ví dụ: {products[0].Title || products[0].Product_name}
