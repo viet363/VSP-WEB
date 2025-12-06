@@ -22,12 +22,13 @@ const Routes = () => {
             <Route path="/login" component={Login} />
             <Route path="/register" component={Register} />
 
+            <Route path="/chats" component={Chats} />
+
             <ProtectedRoute path="/dashboard" exact component={Dashboard} />
             <ProtectedRoute path="/customers" component={Customers} />
             <ProtectedRoute path="/products" component={Products} />
             <ProtectedRoute path="/orders" component={Orders} />
             <ProtectedRoute path="/categories" component={Categorys} />
-            <ProtectedRoute path="/chats" component={Chats} />
             <ProtectedRoute path="/inventory" component={Inventory} />
             <ProtectedRoute path="/inventoryexport" component={InventoryExport} />
             <ProtectedRoute path="/inventoryimport" component={InventoryImport} />
