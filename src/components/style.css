@@ -1,7 +1,7 @@
-/* CSS cho form và các thành phần input */
 .form-group {
   margin-bottom: 1.5rem;
   position: relative;
+
 }
 
 .form-group label {
@@ -27,6 +27,8 @@
   transition: all 0.3s ease;
   background-color: #fff;
   box-sizing: border-box;
+  color: #2d3748;
+
 }
 
 .form-group input:focus {
@@ -72,13 +74,36 @@
   background-color: #fff;
   box-sizing: border-box;
 }
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  background-color: #f7fafc;
+  color: #000;
+}
 
 .form-group textarea:focus {
   outline: none;
   border-color: #4299e1;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
   background-color: #f7fafc;
+  color: #000;
 }
+
 
 /* Button styles */
 .btn {
