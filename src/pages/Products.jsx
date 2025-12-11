@@ -31,14 +31,529 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
     );
 };
 
+// Component Modal quản lý thông số
+const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => {
+    const [specs, setSpecs] = useState([]);
+    const [availableSpecs, setAvailableSpecs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [newSpec, setNewSpec] = useState({ Spec_key: '', Spec_value: '' });
+    const [selectedSpec, setSelectedSpec] = useState('');
+    const [useAvailableSpec, setUseAvailableSpec] = useState(false);
+
+    useEffect(() => {
+        fetchSpecsData();
+    }, [productId, categoryId]);
+
+    const fetchSpecsData = async () => {
+        try {
+            setLoading(true);
+            
+            // Lấy thông số của sản phẩm
+            const productSpecsRes = await api.get(`/specs/product/${productId}`);
+            console.log('Product specs API response:', productSpecsRes.data);
+            
+            // Chuyển đổi dữ liệu từ API về định dạng phù hợp
+            const processedSpecs = (productSpecsRes.data || []).map(item => ({
+                Id: item.Id,
+                key: item.Spec_key || '',
+                value: item.Spec_value || ''
+            }));
+            
+            console.log('Processed specs:', processedSpecs);
+            setSpecs(processedSpecs);
+            
+            // Lấy thông số mẫu từ danh mục
+            if (categoryId) {
+                try {
+                    const categorySpecsRes = await api.get(`/specs/category/${categoryId}`);
+                    console.log('Category specs API response:', categorySpecsRes.data);
+                    setAvailableSpecs(categorySpecsRes.data || []);
+                } catch (err) {
+                    console.log('Không thể lấy thông số theo danh mục:', err.message);
+                    setAvailableSpecs([]);
+                }
+            } else {
+                setAvailableSpecs([]);
+            }
+            
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching specs:', err);
+            setLoading(false);
+        }
+    };
+
+    const handleAddSpec = () => {
+        if (useAvailableSpec && selectedSpec) {
+            // Tìm thông tin của spec đã chọn
+            const selectedSpecObj = availableSpecs.find(spec => spec.Spec_name === selectedSpec);
+            if (selectedSpecObj) {
+                const specExists = specs.find(s => s.key === selectedSpecObj.Spec_name);
+                if (!specExists) {
+                    setSpecs([...specs, { 
+                        key: selectedSpecObj.Spec_name, 
+                        value: '',
+                        Id: null // Tạo mới nên không có Id
+                    }]);
+                    setSelectedSpec('');
+                }
+            }
+        } else if (newSpec.Spec_key && newSpec.Spec_value) {
+            // Thêm thông số tùy chỉnh
+            const specExists = specs.find(s => s.key === newSpec.Spec_key);
+            if (!specExists) {
+                setSpecs([...specs, { 
+                    key: newSpec.Spec_key, 
+                    value: newSpec.Spec_value,
+                    Id: null // Tạo mới nên không có Id
+                }]);
+                setNewSpec({ Spec_key: '', Spec_value: '' });
+            }
+        }
+    };
+
+    const handleRemoveSpec = (index) => {
+        const newSpecs = [...specs];
+        newSpecs.splice(index, 1);
+        setSpecs(newSpecs);
+    };
+
+    const handleSpecChange = (index, field, value) => {
+        const newSpecs = [...specs];
+        newSpecs[index][field] = value;
+        setSpecs(newSpecs);
+    };
+
+ const handleSave = async () => {
+    try {
+        // Chuẩn bị dữ liệu theo đúng format của Postman
+        const specsToSave = specs.map(spec => ({
+            key: (spec.key || '').trim(),
+            value: (spec.value || '').trim()
+        })).filter(spec => spec.key !== '');
+
+        console.log('Sending data:', specsToSave);
+        console.log('Full URL will be:', `${api.defaults.baseURL}/specs/products/${productId}/specs`);
+
+        // Gọi API với format đúng
+        const response = await api.post(`/specs/products/${productId}/specs`, {
+            specs: specsToSave
+        });
+        
+        console.log('Save response:', response.data);
+        alert('Lưu thông số thành công!');
+        onSave();
+        onClose();
+    } catch (err) {
+        console.error('=== ERROR DETAILS ===');
+        console.error('Full Error:', err);
+        console.error('Request Config:', {
+            url: err.config?.url,
+            baseURL: err.config?.baseURL,
+            method: err.config?.method,
+            data: err.config?.data ? JSON.parse(err.config.data) : null
+        });
+        
+        if (err.response) {
+            console.error('Response Status:', err.response.status);
+            console.error('Response Data:', err.response.data);
+            console.error('Response Headers:', err.response.headers);
+        } else if (err.request) {
+            console.error('No response received:', err.request);
+        }
+        console.error('=== END ERROR DETAILS ===');
+        
+        alert(`Lỗi khi lưu thông số: ${err.response?.data?.message || err.message}`);
+    }
+};
+
+    if (loading) {
+        return (
+            <div className="modal-overlay">
+                <div className="modal-content">
+                    <div style={{ color: '#e5e7eb', padding: '20px', textAlign: 'center' }}>
+                        Đang tải thông số...
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h3 style={{ color: '#f9fafb', margin: 0 }}>
+                        Thông số kỹ thuật: {productName}
+                    </h3>
+                    <button className="modal-close" onClick={onClose}>×</button>
+                </div>
+                
+                <div className="modal-body">
+                    <div className="add-spec-section">
+                        <h4 style={{ color: '#e5e7eb', marginBottom: '15px' }}>Thêm thông số mới</h4>
+                        
+                        {availableSpecs.length > 0 && (
+                            <div style={{ marginBottom: '15px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                                    <input
+                                        type="checkbox"
+                                        id="useAvailable"
+                                        checked={useAvailableSpec}
+                                        onChange={(e) => setUseAvailableSpec(e.target.checked)}
+                                    />
+                                    <label htmlFor="useAvailable" style={{ marginLeft: '8px', color: '#e5e7eb' }}>
+                                        Sử dụng thông số mẫu
+                                    </label>
+                                </div>
+                                
+                                {useAvailableSpec && (
+                                    <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                        <select
+                                            value={selectedSpec}
+                                            onChange={(e) => setSelectedSpec(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '8px',
+                                                border: '1px solid #4b5563',
+                                                borderRadius: '4px',
+                                                background: '#374151',
+                                                color: '#e5e7eb'
+                                            }}
+                                        >
+                                            <option value="">-- Chọn thông số --</option>
+                                            {availableSpecs.map((spec, idx) => (
+                                                <option key={spec.Id} value={spec.Spec_name}>
+                                                    {spec.Spec_name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddSpec}
+                                            className="btn-spec-add"
+                                            disabled={!selectedSpec}
+                                        >
+                                            Thêm
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {(!useAvailableSpec || availableSpecs.length === 0) && (
+                            <div className="custom-spec-input">
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Tên thông số"
+                                        value={newSpec.Spec_key}
+                                        onChange={(e) => setNewSpec({ ...newSpec, Spec_key: e.target.value })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '8px',
+                                            border: '1px solid #4b5563',
+                                            borderRadius: '4px',
+                                            background: '#374151',
+                                            color: '#e5e7eb'
+                                        }}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Giá trị"
+                                        value={newSpec.Spec_value}
+                                        onChange={(e) => setNewSpec({ ...newSpec, Spec_value: e.target.value })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '8px',
+                                            border: '1px solid #4b5563',
+                                            borderRadius: '4px',
+                                            background: '#374151',
+                                            color: '#e5e7eb'
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddSpec}
+                                    className="btn-spec-add"
+                                    disabled={!newSpec.Spec_key || !newSpec.Spec_value}
+                                >
+                                    Thêm thông số tùy chỉnh
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="specs-list-section">
+                        <h4 style={{ color: '#e5e7eb', marginBottom: '15px' }}>
+                            Danh sách thông số ({specs.length})
+                        </h4>
+                        
+                        {specs.length === 0 ? (
+                            <div style={{ color: '#9ca3af', textAlign: 'center', padding: '20px', border: '1px dashed #4b5563', borderRadius: '6px' }}>
+                                Chưa có thông số nào. Hãy thêm thông số cho sản phẩm.
+                            </div>
+                        ) : (
+                            <div className="specs-table">
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr>
+                                            <th style={{ padding: '10px', borderBottom: '1px solid #4b5563', textAlign: 'left', color: '#e5e7eb' }}>STT</th>
+                                            <th style={{ padding: '10px', borderBottom: '1px solid #4b5563', textAlign: 'left', color: '#e5e7eb' }}>Tên thông số</th>
+                                            <th style={{ padding: '10px', borderBottom: '1px solid #4b5563', textAlign: 'left', color: '#e5e7eb' }}>Giá trị</th>
+                                            <th style={{ padding: '10px', borderBottom: '1px solid #4b5563', textAlign: 'left', color: '#e5e7eb' }}>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {specs.map((spec, index) => (
+                                            <tr key={index}>
+                                                <td style={{ padding: '10px', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>
+                                                    {index + 1}
+                                                </td>
+                                                <td style={{ padding: '10px', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>
+                                                    <input
+                                                        type="text"
+                                                        value={spec.key || ''}
+                                                        onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '6px',
+                                                            border: '1px solid #4b5563',
+                                                            borderRadius: '4px',
+                                                            background: '#1f2937',
+                                                            color: '#e5e7eb'
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '10px', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>
+                                                    <input
+                                                        type="text"
+                                                        value={spec.value || ''}
+                                                        onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '6px',
+                                                            border: '1px solid #4b5563',
+                                                            borderRadius: '4px',
+                                                            background: '#1f2937',
+                                                            color: '#e5e7eb'
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '10px', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveSpec(index)}
+                                                        className="btn-spec-remove"
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                
+                <div className="modal-footer">
+                    <button onClick={handleSave} className="btn-spec-save">
+                        Lưu thông số
+                    </button>
+                    <button onClick={onClose} className="btn-spec-cancel">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+            
+            <style jsx>{`
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                }
+                
+                .modal-content {
+                    background: #1f2937;
+                    border-radius: 8px;
+                    width: 800px;
+                    max-width: 90%;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                    border: 1px solid #374151;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+                }
+                
+                .modal-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #374151;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .modal-close {
+                    background: none;
+                    border: none;
+                    color: #9ca3af;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                }
+                
+                .modal-close:hover {
+                    background: #374151;
+                    color: #e5e7eb;
+                }
+                
+                .modal-body {
+                    padding: 20px;
+                    flex: 1;
+                    overflow-y: auto;
+                }
+                
+                .add-spec-section {
+                    margin-bottom: 25px;
+                    padding-bottom: 20px;
+                    border-bottom: 1px solid #374151;
+                }
+                
+                .specs-list-section {
+                    margin-bottom: 20px;
+                }
+                
+                .specs-table {
+                    overflow-x: auto;
+                }
+                
+                .modal-footer {
+                    padding: 20px;
+                    border-top: 1px solid #374151;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                
+                .btn-spec-add {
+                    background: #3b82f6;
+                    color: white;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-spec-add:hover:not(:disabled) {
+                    background: #2563eb;
+                    transform: translateY(-1px);
+                }
+                
+                .btn-spec-add:disabled {
+                    background: #4b5563;
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                }
+                
+                .btn-spec-remove {
+                    background: #ef4444;
+                    color: white;
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-spec-remove:hover {
+                    background: #dc2626;
+                    transform: translateY(-1px);
+                }
+                
+                .btn-spec-save {
+                    background: #10b981;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-spec-save:hover {
+                    background: #059669;
+                    transform: translateY(-1px);
+                }
+                
+                .btn-spec-cancel {
+                    background: #6b7280;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-spec-cancel:hover {
+                    background: #4b5563;
+                    transform: translateY(-1px);
+                }
+            `}</style>
+        </div>
+    );
+};
+
 const Products = () => {
     const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
+    const [showSpecsModal, setShowSpecsModal] = useState(false);
+    const [selectedProductId, setSelectedProductId] = useState(null);
+    const [selectedProductName, setSelectedProductName] = useState('');
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+    
+    // State cho bộ lọc
+    const [filters, setFilters] = useState({
+        searchTerm: '',
+        categoryId: '',
+        priceRange: {
+            min: '',
+            max: ''
+        },
+        status: ''
+    });
+
     const [product, setProduct] = useState({
         Product_name: '',
         Price: '',
@@ -52,6 +567,11 @@ const Products = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Áp dụng bộ lọc khi filters thay đổi
+    useEffect(() => {
+        applyFilters();
+    }, [filters, products]);
 
     const fetchData = async () => {
         try {
@@ -71,12 +591,13 @@ const Products = () => {
                 Product_status: item.Product_status || 'Draft',
                 Category_name: item.Category_name || 'Chưa phân loại',
                 picUrl: item.picUrl || '',
-                Price: item.Price || 0
+                Price: parseFloat(item.Price || 0)
             }));
             
             console.log('Processed products:', processedProducts);
             
             setProducts(processedProducts);
+            setFilteredProducts(processedProducts); // Khởi tạo filteredProducts
             setCategories(categoriesRes.data);
             setLoading(false);
         } catch (err) {
@@ -85,6 +606,85 @@ const Products = () => {
             setError(err.message);
             setLoading(false);
         }
+    };
+
+    // Hàm áp dụng bộ lọc
+    const applyFilters = () => {
+        let result = [...products];
+        
+        // Lọc theo từ khóa tìm kiếm
+        if (filters.searchTerm) {
+            const searchTerm = filters.searchTerm.toLowerCase();
+            result = result.filter(product => 
+                product.Product_name.toLowerCase().includes(searchTerm) ||
+                (product.model && product.model.toLowerCase().includes(searchTerm)) ||
+                (product.Description && product.Description.toLowerCase().includes(searchTerm))
+            );
+        }
+        
+        // Lọc theo danh mục
+        if (filters.categoryId) {
+            result = result.filter(product => 
+                product.CategoryId == filters.categoryId
+            );
+        }
+        
+        // Lọc theo giá
+        if (filters.priceRange.min !== '') {
+            const minPrice = parseFloat(filters.priceRange.min);
+            result = result.filter(product => 
+                product.Price >= minPrice
+            );
+        }
+        
+        if (filters.priceRange.max !== '') {
+            const maxPrice = parseFloat(filters.priceRange.max);
+            result = result.filter(product => 
+                product.Price <= maxPrice
+            );
+        }
+        
+        // Lọc theo trạng thái
+        if (filters.status) {
+            result = result.filter(product => 
+                product.Product_status === filters.status
+            );
+        }
+        
+        setFilteredProducts(result);
+    };
+
+    // Xử lý thay đổi bộ lọc
+    const handleFilterChange = (field, value) => {
+        setFilters(prev => {
+            if (field.includes('.')) {
+                const [parent, child] = field.split('.');
+                return {
+                    ...prev,
+                    [parent]: {
+                        ...prev[parent],
+                        [child]: value
+                    }
+                };
+            }
+            return {
+                ...prev,
+                [field]: value
+            };
+        });
+    };
+
+    // Reset bộ lọc
+    const resetFilters = () => {
+        setFilters({
+            searchTerm: '',
+            categoryId: '',
+            priceRange: {
+                min: '',
+                max: ''
+            },
+            status: ''
+        });
     };
 
     const handleAdd = () => {
@@ -129,6 +729,28 @@ const Products = () => {
         }
     };
 
+    const handleOpenSpecs = (productItem) => {
+        if (!productItem.Id) {
+            alert('Sản phẩm chưa được lưu. Vui lòng lưu sản phẩm trước khi thêm thông số.');
+            return;
+        }
+        setSelectedProductId(productItem.Id);
+        setSelectedProductName(productItem.Product_name || '');
+        setSelectedCategoryId(productItem.CategoryId || '');
+        setShowSpecsModal(true);
+    };
+
+    const handleOpenSpecsFromForm = () => {
+        if (!currentId && !editMode) {
+            alert('Vui lòng lưu sản phẩm trước khi thêm thông số.');
+            return;
+        }
+        setSelectedProductId(currentId);
+        setSelectedProductName(product.Product_name || '');
+        setSelectedCategoryId(product.CategoryId || '');
+        setShowSpecsModal(true);
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setProduct({ ...product, [name]: value });
@@ -146,7 +768,8 @@ const Products = () => {
                 await api.put(`/products/${currentId}`, product);
                 alert('Cập nhật sản phẩm thành công!');
             } else {
-                await api.post('/products', product);
+                const result = await api.post('/products', product);
+                setCurrentId(result.data.id); 
                 alert('Thêm sản phẩm thành công!');
             }
             setShowForm(false);
@@ -206,6 +829,7 @@ const Products = () => {
                 <td>{categoryName}</td>
                 <td>
                     <button className="btn-edit" onClick={() => handleEdit(item)}>Sửa</button>
+                    <button className="btn-specs" onClick={() => handleOpenSpecs(item)}>Thông số</button>
                     <button className="btn-delete" onClick={() => handleDelete(item.Id)}>Xóa</button>
                 </td>
             </tr>
@@ -220,6 +844,103 @@ const Products = () => {
             <div className="page-header">
                 <h2 style={{ color: '#f9fafb', margin: 0 }}>Sản phẩm</h2>
                 <button className="btn btn-add" onClick={handleAdd}>+ Thêm sản phẩm</button>
+            </div>
+
+            {/* Bộ lọc sản phẩm */}
+            <div className="filter-section">
+                <h3 style={{ color: '#f9fafb', marginBottom: '15px' }}>Bộ lọc sản phẩm</h3>
+                <div className="filter-grid">
+                    {/* Tìm kiếm theo tên */}
+                    <div className="filter-group">
+                        <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
+                            Tìm kiếm sản phẩm:
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Nhập tên sản phẩm, model hoặc mô tả..."
+                            value={filters.searchTerm}
+                            onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                            className="filter-input"
+                        />
+                    </div>
+
+                    {/* Lọc theo danh mục */}
+                    <div className="filter-group">
+                        <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
+                            Danh mục:
+                        </label>
+                        <select
+                            value={filters.categoryId}
+                            onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">Tất cả danh mục</option>
+                            {categories.map(cat => (
+                                <option key={cat.Id} value={cat.Id}>{cat.Category_name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Lọc theo trạng thái */}
+                    <div className="filter-group">
+                        <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
+                            Trạng thái:
+                        </label>
+                        <select
+                            value={filters.status}
+                            onChange={(e) => handleFilterChange('status', e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="Draft">Bản nháp</option>
+                            <option value="Published">Đã xuất bản</option>
+                            <option value="OutOfStock">Hết hàng</option>
+                            <option value="Archived">Đã lưu trữ</option>
+                        </select>
+                    </div>
+
+                    {/* Lọc theo giá */}
+                    <div className="filter-group">
+                        <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
+                            Khoảng giá:
+                        </label>
+                        <div className="price-range">
+                            <input
+                                type="number"
+                                placeholder="Giá thấp nhất"
+                                value={filters.priceRange.min}
+                                onChange={(e) => handleFilterChange('priceRange.min', e.target.value)}
+                                className="price-input"
+                                min="0"
+                            />
+                            <span style={{ color: '#9ca3af', margin: '0 8px' }}>-</span>
+                            <input
+                                type="number"
+                                placeholder="Giá cao nhất"
+                                value={filters.priceRange.max}
+                                onChange={(e) => handleFilterChange('priceRange.max', e.target.value)}
+                                className="price-input"
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Nút reset filter */}
+                    <div className="filter-group" style={{ alignSelf: 'flex-end' }}>
+                        <button
+                            onClick={resetFilters}
+                            className="btn-reset"
+                            disabled={!filters.searchTerm && !filters.categoryId && !filters.status && !filters.priceRange.min && !filters.priceRange.max}
+                        >
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Thông tin kết quả lọc */}
+                <div style={{ marginTop: '10px', color: '#9ca3af', fontSize: '14px' }}>
+                    Đang hiển thị {filteredProducts.length} / {products.length} sản phẩm
+                </div>
             </div>
 
             {showForm && (
@@ -309,6 +1030,14 @@ const Products = () => {
 
                         <div className="form-actions">
                             <button type="submit" className="btn-submit">Lưu</button>
+                            <button 
+                                type="button" 
+                                onClick={handleOpenSpecsFromForm}
+                                className="btn-specs"
+                                disabled={!editMode}
+                            >
+                                Quản lý thông số
+                            </button>
                             <button type="button" onClick={() => setShowForm(false)} className="btn-cancel">Hủy</button>
                         </div>
                     </form>
@@ -321,11 +1050,21 @@ const Products = () => {
                         limit="10"
                         headData={productTableHead}
                         renderHead={renderHead}
-                        bodyData={products}
+                        bodyData={filteredProducts} // Sử dụng filteredProducts thay vì products
                         renderBody={renderBody}
                     />
                 </div>
             </div>
+
+            {showSpecsModal && (
+                <SpecsModal
+                    productId={selectedProductId}
+                    productName={selectedProductName}
+                    categoryId={selectedCategoryId}
+                    onClose={() => setShowSpecsModal(false)}
+                    onSave={fetchData}
+                />
+            )}
 
             <style jsx>{`
                 .page-header {
@@ -334,6 +1073,86 @@ const Products = () => {
                     align-items: center;
                     margin-bottom: 20px;
                 }
+                
+                .filter-section {
+                    background: #1f2937;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    border: 1px solid #374151;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                }
+                
+                .filter-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                }
+                
+                .filter-group {
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                .filter-input,
+                .filter-select,
+                .price-input {
+                    padding: 10px;
+                    border: 1px solid #4b5563;
+                    border-radius: 6px;
+                    background: #374151;
+                    color: #e5e7eb;
+                    font-size: 14px;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                .filter-input::placeholder,
+                .price-input::placeholder {
+                    color: #9ca3af;
+                    font-size: 12px;
+                }
+                
+                .filter-input:focus,
+                .filter-select:focus,
+                .price-input:focus {
+                    border-color: #3b82f6;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+                
+                .price-range {
+                    display: flex;
+                    align-items: center;
+                }
+                
+                .price-input {
+                    flex: 1;
+                }
+                
+                .btn-reset {
+                    background: #6b7280;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                    width: 100%;
+                }
+                
+                .btn-reset:hover:not(:disabled) {
+                    background: #4b5563;
+                    transform: translateY(-1px);
+                }
+                
+                .btn-reset:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                
                 .btn-add {
                     background: #10b981;
                     color: white;
@@ -345,10 +1164,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
+                
                 .btn-add:hover {
                     background: #059669;
                     transform: translateY(-1px);
                 }
+                
                 .add-form {
                     background: #1f2937;
                     padding: 24px;
@@ -357,18 +1178,21 @@ const Products = () => {
                     border: 1px solid #374151;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
                 }
+                
                 .add-form h3 {
                     margin-top: 0;
                     color: #f9fafb;
                     border-bottom: 1px solid #374151;
                     padding-bottom: 10px;
                 }
+                
                 .add-form label {
                     display: block;
                     margin: 12px 0 6px;
                     font-weight: 500;
                     color: #e5e7eb;
                 }
+                
                 .add-form input,
                 .add-form select,
                 .add-form textarea {
@@ -383,10 +1207,12 @@ const Products = () => {
                     color: #e5e7eb;
                     transition: all 0.2s;
                 }
+                
                 .add-form input::placeholder,
                 .add-form textarea::placeholder {
                     color: #9ca3af;
                 }
+                
                 .add-form input:focus,
                 .add-form select:focus,
                 .add-form textarea:focus {
@@ -394,11 +1220,13 @@ const Products = () => {
                     outline: none;
                     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
                 }
+                
                 .form-actions {
                     margin-top: 24px;
                     display: flex;
                     gap: 12px;
                 }
+                
                 .btn-submit {
                     background: #10b981;
                     color: white;
@@ -410,10 +1238,35 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
+                
                 .btn-submit:hover {
                     background: #059669;
                     transform: translateY(-1px);
                 }
+                
+                .btn-specs {
+                    background: #8b5cf6;
+                    color: white;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-specs:hover:not(:disabled) {
+                    background: #7c3aed;
+                    transform: translateY(-1px);
+                }
+                
+                .btn-specs:disabled {
+                    background: #4b5563;
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                }
+                
                 .btn-cancel {
                     background: #6b7280;
                     color: white;
@@ -425,10 +1278,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
+                
                 .btn-cancel:hover {
                     background: #4b5563;
                     transform: translateY(-1px);
                 }
+                
                 .btn-edit {
                     background: #3b82f6;
                     color: white;
@@ -441,10 +1296,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
+                
                 .btn-edit:hover { 
                     background: #2563eb;
                     transform: translateY(-1px);
                 }
+                
                 .btn-delete {
                     background: #ef4444;
                     color: white;
@@ -455,11 +1312,14 @@ const Products = () => {
                     font-size: 12px;
                     font-weight: 500;
                     transition: all 0.2s;
+                    margin-left: 8px;
                 }
+                
                 .btn-delete:hover { 
                     background: #dc2626;
                     transform: translateY(-1px);
                 }
+                
                 .card {
                     background: #1f2937;
                     border-radius: 8px;
@@ -467,6 +1327,7 @@ const Products = () => {
                     border: 1px solid #374151;
                     overflow: hidden;
                 }
+                
                 .card__body {
                     padding: 0;
                 }

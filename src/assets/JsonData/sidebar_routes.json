@@ -25,6 +25,11 @@
         "icon": "bx bx-cart"
     },
     {
+        "display_name": "Promotions",
+        "route": "/promotions",
+        "icon": "bxs-gift"
+    },    
+    {
         "display_name": "Chats",
         "route": "/chats",
         "icon": "bx bx-chat"
