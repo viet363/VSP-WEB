@@ -16,6 +16,7 @@ const Promotions = () => {
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // State cho bộ lọc
     const [filters, setFilters] = useState({
         searchTerm: '',
         status: '',
@@ -43,6 +44,7 @@ const Promotions = () => {
             const res = await api.get("/promotions");
             console.log('Promotions data:', res.data);
             
+            // Đảm bảo dữ liệu không bị null/undefined
             const processedPromotions = res.data.map(item => ({
                 ...item,
                 Product_name: item.Product_name || 'Không có tên',
@@ -75,13 +77,16 @@ const Promotions = () => {
         fetchProducts();
     }, []);
 
+    // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
     }, [filters, promotions]);
 
+    // Hàm áp dụng bộ lọc
     const applyFilters = () => {
         let result = [...promotions];
         
+        // Lọc theo từ khóa tìm kiếm
         if (filters.searchTerm) {
             const searchTerm = filters.searchTerm.toLowerCase();
             result = result.filter(promo => 
@@ -89,6 +94,7 @@ const Promotions = () => {
             );
         }
         
+        // Lọc theo trạng thái
         if (filters.status !== '') {
             const statusFilter = filters.status === 'active';
             result = result.filter(promo => 
@@ -270,9 +276,11 @@ const Promotions = () => {
                 </button>
             </div>
 
+            {/* Bộ lọc khuyến mãi */}
             <div className="filter-section">
                 <h3 style={{ color: '#f9fafb', marginBottom: '15px' }}>Bộ lọc khuyến mãi</h3>
                 <div className="filter-grid">
+                    {/* Tìm kiếm */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Tìm kiếm:
@@ -286,6 +294,7 @@ const Promotions = () => {
                         />
                     </div>
 
+                    {/* Lọc theo trạng thái */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Trạng thái:
@@ -301,6 +310,7 @@ const Promotions = () => {
                         </select>
                     </div>
 
+                    {/* Lọc theo mức giảm giá */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Mức giảm giá (%):
@@ -328,6 +338,7 @@ const Promotions = () => {
                         </div>
                     </div>
 
+                    {/* Lọc theo ngày */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Hiệu lực:
@@ -351,6 +362,7 @@ const Promotions = () => {
                         </div>
                     </div>
 
+                    {/* Nút reset filter */}
                     <div className="filter-group" style={{ alignSelf: 'flex-end' }}>
                         <button
                             onClick={resetFilters}
@@ -364,6 +376,7 @@ const Promotions = () => {
                     </div>
                 </div>
                 
+                {/* Thông tin kết quả lọc */}
                 <div style={{ marginTop: '10px', color: '#9ca3af', fontSize: '14px' }}>
                     Đang hiển thị {filteredPromotions.length} / {promotions.length} khuyến mãi
                 </div>
@@ -567,7 +580,7 @@ const Promotions = () => {
                     border-radius: 6px;
                     cursor: pointer;
                     font-size: 14px;
-                    font-weight: 200;
+                    font-weight: 500;
                     transition: all 0.2s;
                     height: 40px;
                     width: 75%;
@@ -721,7 +734,7 @@ const Promotions = () => {
                 :global(th) {
                     background: #374151;
                     color: #f9fafb;
-                    padding: 12px;
+                    padding: 12px
                     text-align: left;
                     font-weight: 600;
                     border-bottom: 1px solid #4b5563;

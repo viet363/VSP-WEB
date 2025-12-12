@@ -564,6 +564,7 @@ export default function Inventory() {
           font-size: 14px;
           font-weight: 500;
           transition: all 0.2s;
+          height: 40px;
           width: 100%;
         }
         

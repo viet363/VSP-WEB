@@ -31,7 +31,6 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
     );
 };
 
-<<<<<<< HEAD
 // Component Modal quản lý thông số
 const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => {
     const [specs, setSpecs] = useState([]);
@@ -533,17 +532,12 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
-=======
-const Products = () => {
-    const [products, setProducts] = useState([]);
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
-<<<<<<< HEAD
     const [showSpecsModal, setShowSpecsModal] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState(null);
     const [selectedProductName, setSelectedProductName] = useState('');
@@ -560,8 +554,6 @@ const Products = () => {
         status: ''
     });
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const [product, setProduct] = useState({
         Product_name: '',
         Price: '',
@@ -576,14 +568,11 @@ const Products = () => {
         fetchData();
     }, []);
 
-<<<<<<< HEAD
     // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
     }, [filters, products]);
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const fetchData = async () => {
         try {
             console.log('Fetching products and categories...');
@@ -602,20 +591,13 @@ const Products = () => {
                 Product_status: item.Product_status || 'Draft',
                 Category_name: item.Category_name || 'Chưa phân loại',
                 picUrl: item.picUrl || '',
-<<<<<<< HEAD
                 Price: parseFloat(item.Price || 0)
-=======
-                Price: item.Price || 0
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             }));
             
             console.log('Processed products:', processedProducts);
             
             setProducts(processedProducts);
-<<<<<<< HEAD
             setFilteredProducts(processedProducts); // Khởi tạo filteredProducts
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             setCategories(categoriesRes.data);
             setLoading(false);
         } catch (err) {
@@ -626,7 +608,6 @@ const Products = () => {
         }
     };
 
-<<<<<<< HEAD
     // Hàm áp dụng bộ lọc
     const applyFilters = () => {
         let result = [...products];
@@ -701,8 +682,6 @@ const Products = () => {
         });
     };
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const handleAdd = () => {
         setProduct({
             Product_name: '',
@@ -745,7 +724,6 @@ const Products = () => {
         }
     };
 
-<<<<<<< HEAD
     const handleOpenSpecs = (productItem) => {
         if (!productItem.Id) {
             alert('Sản phẩm chưa được lưu. Vui lòng lưu sản phẩm trước khi thêm thông số.');
@@ -768,8 +746,6 @@ const Products = () => {
         setShowSpecsModal(true);
     };
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const handleChange = (e) => {
         const { name, value } = e.target;
         setProduct({ ...product, [name]: value });
@@ -787,12 +763,8 @@ const Products = () => {
                 await api.put(`/products/${currentId}`, product);
                 alert('Cập nhật sản phẩm thành công!');
             } else {
-<<<<<<< HEAD
                 const result = await api.post('/products', product);
                 setCurrentId(result.data.id); 
-=======
-                await api.post('/products', product);
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 alert('Thêm sản phẩm thành công!');
             }
             setShowForm(false);
@@ -852,10 +824,7 @@ const Products = () => {
                 <td>{categoryName}</td>
                 <td>
                     <button className="btn-edit" onClick={() => handleEdit(item)}>Sửa</button>
-<<<<<<< HEAD
                     <button className="btn-specs" onClick={() => handleOpenSpecs(item)}>Thông số</button>
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                     <button className="btn-delete" onClick={() => handleDelete(item.Id)}>Xóa</button>
                 </td>
             </tr>
@@ -872,7 +841,6 @@ const Products = () => {
                 <button className="btn btn-add" onClick={handleAdd}>+ Thêm sản phẩm</button>
             </div>
 
-<<<<<<< HEAD
             {/* Bộ lọc sản phẩm */}
             <div className="filter-section">
                 <h3 style={{ color: '#f9fafb', marginBottom: '15px' }}>Bộ lọc sản phẩm</h3>
@@ -970,8 +938,6 @@ const Products = () => {
                 </div>
             </div>
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             {showForm && (
                 <div className="add-form">
                     <h3 style={{ color: '#f9fafb', marginTop: 0 }}>{editMode ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
@@ -1059,7 +1025,6 @@ const Products = () => {
 
                         <div className="form-actions">
                             <button type="submit" className="btn-submit">Lưu</button>
-<<<<<<< HEAD
                             <button 
                                 type="button" 
                                 onClick={handleOpenSpecsFromForm}
@@ -1068,8 +1033,6 @@ const Products = () => {
                             >
                                 Quản lý thông số
                             </button>
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                             <button type="button" onClick={() => setShowForm(false)} className="btn-cancel">Hủy</button>
                         </div>
                     </form>
@@ -1082,17 +1045,12 @@ const Products = () => {
                         limit="10"
                         headData={productTableHead}
                         renderHead={renderHead}
-<<<<<<< HEAD
                         bodyData={filteredProducts} // Sử dụng filteredProducts thay vì products
-=======
-                        bodyData={products}
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                         renderBody={renderBody}
                     />
                 </div>
             </div>
 
-<<<<<<< HEAD
             {showSpecsModal && (
                 <SpecsModal
                     productId={selectedProductId}
@@ -1103,8 +1061,6 @@ const Products = () => {
                 />
             )}
 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             <style jsx>{`
                 .page-header {
                     display: flex;
@@ -1112,7 +1068,6 @@ const Products = () => {
                     align-items: center;
                     margin-bottom: 20px;
                 }
-<<<<<<< HEAD
                 
                 .filter-section {
                     background: #1f2937;
@@ -1180,6 +1135,7 @@ const Products = () => {
                     font-size: 14px;
                     font-weight: 500;
                     transition: all 0.2s;
+                    height: 40px;
                     width: 100%;
                 }
                 
@@ -1193,8 +1149,6 @@ const Products = () => {
                     cursor: not-allowed;
                 }
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-add {
                     background: #10b981;
                     color: white;
@@ -1206,18 +1160,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-add:hover {
                     background: #059669;
                     transform: translateY(-1px);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form {
                     background: #1f2937;
                     padding: 24px;
@@ -1226,30 +1174,21 @@ const Products = () => {
                     border: 1px solid #374151;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form h3 {
                     margin-top: 0;
                     color: #f9fafb;
                     border-bottom: 1px solid #374151;
                     padding-bottom: 10px;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form label {
                     display: block;
                     margin: 12px 0 6px;
                     font-weight: 500;
                     color: #e5e7eb;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form input,
                 .add-form select,
                 .add-form textarea {
@@ -1264,18 +1203,12 @@ const Products = () => {
                     color: #e5e7eb;
                     transition: all 0.2s;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form input::placeholder,
                 .add-form textarea::placeholder {
                     color: #9ca3af;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .add-form input:focus,
                 .add-form select:focus,
                 .add-form textarea:focus {
@@ -1283,19 +1216,13 @@ const Products = () => {
                     outline: none;
                     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .form-actions {
                     margin-top: 24px;
                     display: flex;
                     gap: 12px;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-submit {
                     background: #10b981;
                     color: white;
@@ -1307,15 +1234,11 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-submit:hover {
                     background: #059669;
                     transform: translateY(-1px);
                 }
-<<<<<<< HEAD
                 
                 .btn-specs {
                     background: #8b5cf6;
@@ -1340,8 +1263,6 @@ const Products = () => {
                     opacity: 0.6;
                 }
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-cancel {
                     background: #6b7280;
                     color: white;
@@ -1353,18 +1274,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-cancel:hover {
                     background: #4b5563;
                     transform: translateY(-1px);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-edit {
                     background: #3b82f6;
                     color: white;
@@ -1377,18 +1292,12 @@ const Products = () => {
                     font-weight: 500;
                     transition: all 0.2s;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-edit:hover { 
                     background: #2563eb;
                     transform: translateY(-1px);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-delete {
                     background: #ef4444;
                     color: white;
@@ -1399,21 +1308,14 @@ const Products = () => {
                     font-size: 12px;
                     font-weight: 500;
                     transition: all 0.2s;
-<<<<<<< HEAD
                     margin-left: 8px;
                 }
                 
-=======
-                }
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .btn-delete:hover { 
                     background: #dc2626;
                     transform: translateY(-1px);
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .card {
                     background: #1f2937;
                     border-radius: 8px;
@@ -1421,10 +1323,7 @@ const Products = () => {
                     border: 1px solid #374151;
                     overflow: hidden;
                 }
-<<<<<<< HEAD
                 
-=======
->>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                 .card__body {
                     padding: 0;
                 }
