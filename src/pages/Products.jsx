@@ -161,7 +161,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
         } else if (err.request) {
             console.error('No response received:', err.request);
         }
-        console.error('=== END ERROR DETAILS ===');
+        console.error('END ERROR DETAILS');
         
         alert(`Lỗi khi lưu thông số: ${err.response?.data?.message || err.message}`);
     }
@@ -622,14 +622,12 @@ const Products = () => {
             );
         }
         
-        // Lọc theo danh mục
         if (filters.categoryId) {
             result = result.filter(product => 
                 product.CategoryId == filters.categoryId
             );
         }
         
-        // Lọc theo giá
         if (filters.priceRange.min !== '') {
             const minPrice = parseFloat(filters.priceRange.min);
             result = result.filter(product => 
@@ -644,7 +642,6 @@ const Products = () => {
             );
         }
         
-        // Lọc theo trạng thái
         if (filters.status) {
             result = result.filter(product => 
                 product.Product_status === filters.status
@@ -654,7 +651,6 @@ const Products = () => {
         setFilteredProducts(result);
     };
 
-    // Xử lý thay đổi bộ lọc
     const handleFilterChange = (field, value) => {
         setFilters(prev => {
             if (field.includes('.')) {
@@ -674,7 +670,6 @@ const Products = () => {
         });
     };
 
-    // Reset bộ lọc
     const resetFilters = () => {
         setFilters({
             searchTerm: '',
