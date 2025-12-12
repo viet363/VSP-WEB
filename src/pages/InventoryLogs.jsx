@@ -8,6 +8,7 @@ const renderHead = (h, i) => <th key={i}>{h}</th>;
 
 export default function InventoryLogs() {
   const [logs, setLogs] = useState([]);
+<<<<<<< HEAD
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,11 +26,16 @@ export default function InventoryLogs() {
     minQuantity: '',
     maxQuantity: ''
   });
+=======
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
 
   const fetchLogs = async () => {
     setLoading(true);
     setError('');
     try {
+<<<<<<< HEAD
       const res = await api.get('/inventory/log');
       console.log('Logs data:', res.data);
       
@@ -50,6 +56,12 @@ export default function InventoryLogs() {
       
       // Lấy danh sách kho để filter
       fetchWarehouses();
+=======
+      // SỬA Ở ĐÂY: đổi từ '/inventory/logs' thành '/inventory/log'
+      const res = await api.get('/inventory/log');
+      console.log('Logs data:', res.data);
+      setLogs(res.data);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     } catch (err) { 
       console.error('Error fetching logs:', err);
       setError('Không thể tải dữ liệu nhật ký');
@@ -57,6 +69,7 @@ export default function InventoryLogs() {
     setLoading(false);
   };
 
+<<<<<<< HEAD
   const fetchWarehouses = async () => {
     try {
       const res = await api.get('/warehouses');
@@ -66,10 +79,13 @@ export default function InventoryLogs() {
     }
   };
 
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
   useEffect(() => { 
     fetchLogs(); 
   }, []);
 
+<<<<<<< HEAD
   // Áp dụng bộ lọc khi filters thay đổi
   useEffect(() => {
     applyFilters();
@@ -170,6 +186,8 @@ export default function InventoryLogs() {
     });
   };
 
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
   const renderBody = (item, index) => (
     <tr key={item.Id}>
       <td>{index + 1}</td>
@@ -181,6 +199,7 @@ export default function InventoryLogs() {
           {item.Change_type === 'IN' ? 'NHẬP' : 'XUẤT'}
         </span>
       </td>
+<<<<<<< HEAD
       <td>
         <span style={{
           padding: '4px 8px',
@@ -219,10 +238,27 @@ export default function InventoryLogs() {
         borderRadius: '6px',
         cursor: 'pointer'
       }}>Thử lại</button>
+=======
+      <td>{item.Quantity}</td>
+      <td>{item.Current_stock}</td>
+      <td style={{maxWidth: '200px'}}>{item.Note || 'Không có'}</td>
+      <td>{new Date(item.Created_at).toLocaleString()}</td>
+    </tr>
+  );
+
+  if (loading) return <div className="loading">Loading...</div>;
+  
+  if (error) return (
+    <div>
+      <h2>Inventory Logs</h2>
+      <div className="alert alert-danger">{error}</div>
+      <button onClick={fetchLogs} className="btn btn-primary">Thử lại</button>
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     </div>
   );
 
   return (
+<<<<<<< HEAD
     <div style={{ backgroundColor: '#111827', minHeight: '100vh', color: '#e5e7eb', padding: '20px' }}>
       <div className="page-header">
         <h2 style={{ color: '#f9fafb', margin: 0 }}>Nhật ký tồn kho</h2>
@@ -358,17 +394,36 @@ export default function InventoryLogs() {
             <div style={{ color: '#9ca3af', textAlign: 'center', padding: '40px' }}>
               Không có dữ liệu nhật ký
             </div>
+=======
+    <div>
+      <h2>Inventory Logs</h2>
+      <div className="card">
+        <div className="card__header">
+          <h3>Nhật ký tồn kho</h3>
+          <button onClick={fetchLogs} className="btn btn-sm btn-primary">
+            Làm mới
+          </button>
+        </div>
+        <div className="card__body">
+          {logs.length === 0 ? (
+            <div className="text-center p-4">Không có dữ liệu nhật ký</div>
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
           ) : (
             <Table 
               limit="15" 
               headData={headData} 
               renderHead={renderHead} 
+<<<<<<< HEAD
               bodyData={filteredLogs} 
+=======
+              bodyData={logs} 
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
               renderBody={renderBody}
             />
           )}
         </div>
       </div>
+<<<<<<< HEAD
 
       <style jsx>{`
         .page-header {
@@ -540,6 +595,8 @@ export default function InventoryLogs() {
           color: white;
         }
       `}</style>
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     </div>
   );
 }

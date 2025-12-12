@@ -14,6 +14,7 @@ const customerTableHead = [
 
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
+<<<<<<< HEAD
     const [filteredCustomers, setFilteredCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -25,11 +26,16 @@ const Customers = () => {
         minSpend: '',
         maxSpend: ''
     });
+=======
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
 
     useEffect(() => {
         fetchCustomers();
     }, []);
 
+<<<<<<< HEAD
     // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
@@ -55,6 +61,12 @@ const Customers = () => {
             
             setCustomers(processedCustomers);
             setFilteredCustomers(processedCustomers);
+=======
+    const fetchCustomers = async () => {
+        try {
+            const response = await api.get('/customers');
+            setCustomers(response.data);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -62,6 +74,7 @@ const Customers = () => {
         }
     };
 
+<<<<<<< HEAD
     // Hàm áp dụng bộ lọc
     const applyFilters = () => {
         let result = [...customers];
@@ -399,6 +412,43 @@ const Customers = () => {
                     background: #374151;
                 }
             `}</style>
+=======
+    const renderHead = (item, index) => <th key={index}>{item}</th>;
+
+    const renderBody = (item, index) => (
+        <tr key={index}>
+            <td>{index + 1}</td>
+            <td>{item.Fullname || 'Không có tên'}</td>
+            <td>{item.Email || 'Không có email'}</td>
+            <td>{item.Phone || 'Không có SĐT'}</td>
+            <td>{item.total_orders || 0}</td>
+            <td>{item.total_spend ? `${item.total_spend.toLocaleString()} VND` : '0 VND'}</td>
+            <td>{item.address || 'Không có địa chỉ'}</td>
+        </tr>
+    );
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
+
+    return (
+        <div>
+            <h2 className="page-header">Khách hàng</h2>
+            <div className="row">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="card__body">
+                            <Table
+                                limit='10'
+                                headData={customerTableHead}
+                                renderHead={renderHead}
+                                bodyData={customers}
+                                renderBody={renderBody}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
         </div>
     );
 };

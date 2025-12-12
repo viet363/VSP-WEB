@@ -15,7 +15,10 @@ import InventoryExport from '../pages/InventoryExport';
 import InventoryImport from '../pages/InventoryImport';
 import InventoryLogs from '../pages/InventoryLogs';
 import Warehouses from '../pages/Warehouses';
+<<<<<<< HEAD
 import Promotions from '../pages/Promotions';
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
 
 const Routes = () => {
     return (
@@ -35,7 +38,10 @@ const Routes = () => {
             <ProtectedRoute path="/inventoryimport" component={InventoryImport} />
             <ProtectedRoute path="/inventorylogs" component={InventoryLogs} />
             <ProtectedRoute path="/warehouses" component={Warehouses} />
+<<<<<<< HEAD
             <ProtectedRoute path="/Promotions" component={Promotions} />
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
         </Switch>
     );
 };

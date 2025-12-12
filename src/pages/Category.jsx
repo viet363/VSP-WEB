@@ -10,6 +10,7 @@ const categoryTableHead = [
     'Hành động'
 ];
 
+<<<<<<< HEAD
 // Component xử lý lỗi hình ảnh
 const ImageWithFallback = ({ src, alt, ...props }) => {
     const [imgError, setImgError] = useState(false);
@@ -31,23 +32,31 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
 const Categories = () => {
     const [categories, setCategories] = useState([]);
     const [filteredCategories, setFilteredCategories] = useState([]);
+=======
+const Categories = () => {
+    const [categories, setCategories] = useState([]);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
+<<<<<<< HEAD
     
     // State cho bộ lọc
     const [filters, setFilters] = useState({
         searchTerm: '',
     });
 
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const [category, setCategory] = useState({ Category_name: '', picUrl: '' });
 
     useEffect(() => {
         fetchCategories();
     }, []);
 
+<<<<<<< HEAD
     // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
@@ -69,6 +78,12 @@ const Categories = () => {
             
             setCategories(processedCategories);
             setFilteredCategories(processedCategories); // Khởi tạo filteredCategories
+=======
+    const fetchCategories = async () => {
+        try {
+            const response = await api.get('/categories');
+            setCategories(response.data);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -76,6 +91,7 @@ const Categories = () => {
         }
     };
 
+<<<<<<< HEAD
     // Hàm áp dụng bộ lọc
     const applyFilters = () => {
         let result = [...categories];
@@ -104,6 +120,8 @@ const Categories = () => {
         });
     };
 
+=======
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
     const handleAdd = () => {
         setCategory({ Category_name: '', picUrl: '' });
         setEditMode(false);
@@ -124,7 +142,11 @@ const Categories = () => {
                 alert('Xóa thành công!');
                 fetchCategories();
             } catch (err) {
+<<<<<<< HEAD
                 alert('Lỗi khi xóa: ' + (err.response?.data?.error || err.message));
+=======
+                alert('Lỗi khi xóa: ' + err.response?.data?.error || err.message);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             }
         }
     };
@@ -152,11 +174,16 @@ const Categories = () => {
             setShowForm(false);
             fetchCategories();
         } catch (err) {
+<<<<<<< HEAD
             alert('Lỗi khi lưu: ' + (err.response?.data?.error || err.message));
+=======
+            alert('Lỗi khi lưu: ' + err.response?.data?.error || err.message);
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
         }
     };
 
     const renderHead = (item, index) => <th key={index}>{item}</th>;
+<<<<<<< HEAD
     
     const renderBody = (item, index) => {
         const categoryName = item.Category_name || 'Không có tên';
@@ -291,6 +318,42 @@ const Categories = () => {
                                 />
                             </div>
                         )}
+=======
+    const renderBody = (item, index) => (
+        <tr key={index}>
+            <td>{index + 1}</td>
+            <td>{item.Id}</td>
+            <td>{item.Category_name}</td>
+            <td><img src={item.picUrl} alt="category" style={{ width: 50, height: 50 }} /></td>
+            <td>
+                <button className="btn-edit" onClick={() => handleEdit(item)}>Sửa</button>
+                <button className="btn-delete" onClick={() => handleDelete(item.Id)}>Xóa</button>
+            </td>
+        </tr>
+    );
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
+
+    return (
+        <div>
+            <div className="page-header">
+                <h2>Danh mục sản phẩm</h2>
+                <button className="btn btn-add" onClick={handleAdd}>+ Thêm danh mục</button>
+            </div>
+
+            {showForm && (
+                <div className="add-form">
+                    <h3>{editMode ? 'Sửa danh mục' : 'Thêm danh mục mới'}</h3>
+                    <form onSubmit={handleSubmit}>
+                        <label>Tên danh mục:</label>
+                        <input type="text" name="Category_name" value={category.Category_name} onChange={handleChange} required />
+
+                        <label>URL hình ảnh:</label>
+                        <input type="text" name="picUrl" value={category.picUrl} onChange={handleChange} required />
+
+                        {category.picUrl && <img src={category.picUrl} alt="preview" style={{ width: 100, marginTop: 10 }} />}
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
 
                         <div className="form-actions">
                             <button type="submit" className="btn-submit">Lưu</button>
@@ -306,13 +369,18 @@ const Categories = () => {
                         limit="10"
                         headData={categoryTableHead}
                         renderHead={renderHead}
+<<<<<<< HEAD
                         bodyData={filteredCategories}
+=======
+                        bodyData={categories}
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
                         renderBody={renderBody}
                     />
                 </div>
             </div>
 
             <style jsx>{`
+<<<<<<< HEAD
                 .page-header {
                     display: flex;
                     justify-content: space-between;
@@ -546,6 +614,27 @@ const Categories = () => {
                 :global(tr:nth-child(even):hover) {
                     background: #374151;
                 }
+=======
+                .btn-edit {
+                    background: #2196f3;
+                    color: white;
+                    padding: 5px 10px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-right: 5px;
+                }
+                .btn-edit:hover { background: #1976d2; }
+                .btn-delete {
+                    background: #f44336;
+                    color: white;
+                    padding: 5px 10px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                .btn-delete:hover { background: #d32f2f; }
+>>>>>>> a0aefc4483ec64fe1de8054464a781bae476a988
             `}</style>
         </div>
     );
