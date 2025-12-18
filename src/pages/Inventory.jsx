@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; 
 import Table from '../components/table/Table.jsx';
 import api from '../api';
 import { useHistory } from 'react-router-dom';
@@ -10,10 +10,9 @@ export default function Inventory() {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [, setProducts] = useState([]); 
   const [loading, setLoading] = useState(true);
 
-  // State cho bộ lọc
   const [filters, setFilters] = useState({
     searchTerm: '',
     warehouseId: '',
@@ -42,7 +41,6 @@ export default function Inventory() {
       
       console.log('Raw inventory data:', invRes.data);
       
-      // Đảm bảo dữ liệu không bị null/undefined
       const processedRows = invRes.data.map(item => ({
         ...item,
         Product_name: item.Product_name || 'Không có tên',
@@ -70,16 +68,9 @@ export default function Inventory() {
     fetchData(); 
   }, []);
 
-  // Áp dụng bộ lọc khi filters thay đổi
-  useEffect(() => {
-    applyFilters();
-  }, [filters, rows]);
-
-  // Hàm áp dụng bộ lọc
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let result = [...rows];
     
-    // Lọc theo từ khóa tìm kiếm
     if (filters.searchTerm) {
       const searchTerm = filters.searchTerm.toLowerCase();
       result = result.filter(row => 
@@ -88,14 +79,12 @@ export default function Inventory() {
       );
     }
     
-    // Lọc theo kho
     if (filters.warehouseId) {
       result = result.filter(row => 
-        row.WarehouseId == filters.warehouseId
+        row.WarehouseId === filters.warehouseId 
       );
     }
     
-    // Lọc theo trạng thái
     if (filters.status) {
       if (filters.status === 'low') {
         result = result.filter(row => row.Stock < row.Min_stock);
@@ -108,7 +97,6 @@ export default function Inventory() {
       }
     }
     
-    // Lọc theo tồn kho hiện tại
     if (filters.stockRange.min !== '') {
       const minStock = parseInt(filters.stockRange.min);
       result = result.filter(row => row.Stock >= minStock);
@@ -119,7 +107,6 @@ export default function Inventory() {
       result = result.filter(row => row.Stock <= maxStock);
     }
     
-    // Lọc theo ngưỡng tồn kho tối thiểu
     if (filters.minStockRange.min !== '') {
       const minThreshold = parseInt(filters.minStockRange.min);
       result = result.filter(row => row.Min_stock >= minThreshold);
@@ -131,7 +118,11 @@ export default function Inventory() {
     }
     
     setFilteredRows(result);
-  };
+  }, [rows, filters.searchTerm, filters.warehouseId, filters.status, filters.stockRange.min, filters.stockRange.max, filters.minStockRange.min, filters.minStockRange.max]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => {
@@ -174,14 +165,6 @@ export default function Inventory() {
     return { text: 'Đủ hàng', color: '#10b981', bgColor: '#d1fae5' };
   };
 
-  const getStockLevel = (stock, minStock) => {
-    const percentage = minStock > 0 ? (stock / minStock) * 100 : 100;
-    if (percentage < 50) return 'critical';
-    if (percentage < 100) return 'low';
-    if (percentage === 100) return 'warning';
-    return 'ok';
-  };
-
   const handleImport = (productId, warehouseId) => {
     history.push(`/inventory/import?product=${productId}&warehouse=${warehouseId}`);
   };
@@ -192,7 +175,6 @@ export default function Inventory() {
 
   const renderBody = (item, index) => {
     const stockStatus = getStockStatus(item.Stock, item.Min_stock);
-    const stockLevel = getStockLevel(item.Stock, item.Min_stock);
     const stockPercentage = item.Min_stock > 0 ? Math.round((item.Stock / item.Min_stock) * 100) : 100;
     
     return (
@@ -292,7 +274,6 @@ export default function Inventory() {
         </button>
       </div>
 
-      {/* Thống kê nhanh */}
       <div className="stats-section">
         <div className="stats-grid">
           <div className="stat-card" style={{ backgroundColor: '#1f2937', borderLeft: '4px solid #3b82f6' }}>
@@ -314,11 +295,9 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Bộ lọc tồn kho */}
       <div className="filter-section">
         <h3 style={{ color: '#f9fafb', marginBottom: '15px' }}>Bộ lọc tồn kho</h3>
         <div className="filter-grid">
-          {/* Tìm kiếm */}
           <div className="filter-group">
             <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
               Tìm kiếm:
@@ -332,7 +311,6 @@ export default function Inventory() {
             />
           </div>
 
-          {/* Lọc theo kho */}
           <div className="filter-group">
             <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
               Kho:
@@ -349,7 +327,6 @@ export default function Inventory() {
             </select>
           </div>
 
-          {/* Lọc theo trạng thái */}
           <div className="filter-group">
             <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
               Trạng thái:
@@ -367,7 +344,6 @@ export default function Inventory() {
             </select>
           </div>
 
-          {/* Lọc theo tồn kho */}
           <div className="filter-group">
             <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
               Tồn kho hiện tại:
@@ -393,7 +369,6 @@ export default function Inventory() {
             </div>
           </div>
 
-          {/* Lọc theo ngưỡng tồn */}
           <div className="filter-group">
             <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
               Ngưỡng tồn tối thiểu:
@@ -419,7 +394,6 @@ export default function Inventory() {
             </div>
           </div>
 
-          {/* Nút reset filter */}
           <div className="filter-group" style={{ alignSelf: 'flex-end' }}>
             <button
               onClick={resetFilters}
@@ -433,7 +407,6 @@ export default function Inventory() {
           </div>
         </div>
         
-        {/* Thông tin kết quả lọc */}
         <div style={{ marginTop: '10px', color: '#9ca3af', fontSize: '14px' }}>
           Đang hiển thị {filteredRows.length} / {rows.length} sản phẩm
           {filters.status && ` • Trạng thái: ${filters.status}`}

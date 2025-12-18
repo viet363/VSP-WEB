@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useCallback } from 'react';
 import Table from '../components/table/Table';
 import api from '../api';
 
@@ -77,13 +77,8 @@ const Promotions = () => {
         fetchProducts();
     }, []);
 
-    // Áp dụng bộ lọc khi filters thay đổi
-    useEffect(() => {
-        applyFilters();
-    }, [filters, promotions]);
-
     // Hàm áp dụng bộ lọc
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
         let result = [...promotions];
         
         // Lọc theo từ khóa tìm kiếm
@@ -134,7 +129,12 @@ const Promotions = () => {
         }
         
         setFilteredPromotions(result);
-    };
+    }, [promotions, filters]);
+
+    // Áp dụng bộ lọc khi filters thay đổi
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => {
@@ -338,7 +338,6 @@ const Promotions = () => {
                         </div>
                     </div>
 
-                    {/* Lọc theo ngày */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Hiệu lực:
@@ -562,8 +561,8 @@ const Promotions = () => {
                 
                 .date-range,
                 .discount-range {
-                    display: flex;
                     align-items: center;
+                    width: 100%;
                 }
                 
                 .date-input,
@@ -633,7 +632,7 @@ const Promotions = () => {
                     display: block;
                     margin: 12px 0 6px;
                     font-weight: 500;
-                    color: #e5e7eb;
+                    color: '#e5e7eb';
                 }
                 
                 .form-actions {
@@ -734,7 +733,7 @@ const Promotions = () => {
                 :global(th) {
                     background: #374151;
                     color: #f9fafb;
-                    padding: 12px
+                    padding: 12px;
                     text-align: left;
                     font-weight: 600;
                     border-bottom: 1px solid #4b5563;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // Thêm useCallback
 import Table from '../components/table/Table';
 import api from '../api';
 import { Modal, Table as AntTable, Tag } from "antd";
@@ -44,37 +44,8 @@ const Orders = () => {
         fetchOrders();
     }, []);
 
-    // Áp dụng bộ lọc khi filters thay đổi
-    useEffect(() => {
-        applyFilters();
-    }, [filters, orders]);
-
-    const fetchOrders = async () => {
-        try {
-            const response = await api.get('/orders');
-            console.log('Raw orders data:', response.data);
-            
-            // Đảm bảo dữ liệu không bị null/undefined
-            const processedOrders = response.data.map(item => ({
-                ...item,
-                customer_name: item.customer_name || 'Không có tên',
-                total: parseFloat(item.total || 0),
-                Order_status: item.Order_status || 'Pending',
-                Payment_type: item.Payment_type || 'COD',
-                Order_date: item.Order_date || new Date().toISOString()
-            }));
-            
-            setOrders(processedOrders);
-            setFilteredOrders(processedOrders);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Hàm áp dụng bộ lọc
-    const applyFilters = () => {
+    // Hàm áp dụng bộ lọc - Sử dụng useCallback
+    const applyFilters = useCallback(() => {
         let result = [...orders];
         
         // Lọc theo từ khóa tìm kiếm
@@ -132,6 +103,37 @@ const Orders = () => {
         }
         
         setFilteredOrders(result);
+    }, [orders, filters.searchTerm, filters.status, filters.paymentType, 
+        filters.dateRange.start, filters.dateRange.end, 
+        filters.amountRange.min, filters.amountRange.max]);
+
+    // Áp dụng bộ lọc khi filters thay đổi
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]); // Thêm applyFilters vào dependency array
+
+    const fetchOrders = async () => {
+        try {
+            const response = await api.get('/orders');
+            console.log('Raw orders data:', response.data);
+            
+            // Đảm bảo dữ liệu không bị null/undefined
+            const processedOrders = response.data.map(item => ({
+                ...item,
+                customer_name: item.customer_name || 'Không có tên',
+                total: parseFloat(item.total || 0),
+                Order_status: item.Order_status || 'Pending',
+                Payment_type: item.Payment_type || 'COD',
+                Order_date: item.Order_date || new Date().toISOString()
+            }));
+            
+            setOrders(processedOrders);
+            setFilteredOrders(processedOrders);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleFilterChange = (field, value) => {
@@ -339,7 +341,6 @@ const Orders = () => {
                         </select>
                     </div>
 
-                    {/* Lọc theo ngày */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Ngày đặt:
@@ -576,7 +577,6 @@ const Orders = () => {
                 
                 .date-range,
                 .amount-range {
-                    display: flex;
                     align-items: center;
                 }
                 

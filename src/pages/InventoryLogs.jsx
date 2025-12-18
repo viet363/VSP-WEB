@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Table from '../components/table/Table.jsx';
 import api from '../api';
 
@@ -26,7 +26,7 @@ export default function InventoryLogs() {
     maxQuantity: ''
   });
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => { // Sử dụng useCallback
     setLoading(true);
     setError('');
     try {
@@ -55,7 +55,7 @@ export default function InventoryLogs() {
       setError('Không thể tải dữ liệu nhật ký');
     }
     setLoading(false);
-  };
+  }, []);
 
   const fetchWarehouses = async () => {
     try {
@@ -68,15 +68,10 @@ export default function InventoryLogs() {
 
   useEffect(() => { 
     fetchLogs(); 
-  }, []);
+  }, [fetchLogs]); // Thêm fetchLogs vào dependencies
 
-  // Áp dụng bộ lọc khi filters thay đổi
-  useEffect(() => {
-    applyFilters();
-  }, [filters, logs]);
-
-  // Hàm áp dụng bộ lọc
-  const applyFilters = () => {
+  // Hàm áp dụng bộ lọc - Sử dụng useCallback
+  const applyFilters = useCallback(() => {
     let result = [...logs];
     
     // Lọc theo từ khóa tìm kiếm
@@ -92,7 +87,7 @@ export default function InventoryLogs() {
     // Lọc theo kho
     if (filters.warehouseId) {
       result = result.filter(log => 
-        log.WarehouseId == filters.warehouseId
+        log.WarehouseId === filters.warehouseId
       );
     }
     
@@ -135,7 +130,14 @@ export default function InventoryLogs() {
     }
     
     setFilteredLogs(result);
-  };
+  }, [logs, filters.searchTerm, filters.warehouseId, filters.changeType, 
+      filters.dateRange.start, filters.dateRange.end, 
+      filters.minQuantity, filters.maxQuantity]);
+
+  // Áp dụng bộ lọc khi filters thay đổi
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]); // Thêm applyFilters vào dependency array
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => {
@@ -428,7 +430,6 @@ export default function InventoryLogs() {
         
         .date-range,
         .quantity-range {
-          display: flex;
           align-items: center;
         }
         

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // Thêm useCallback
 import Table from '../components/table/Table';
 import api from '../api';
 
@@ -30,40 +30,8 @@ const Customers = () => {
         fetchCustomers();
     }, []);
 
-    // Áp dụng bộ lọc khi filters thay đổi
-    useEffect(() => {
-        applyFilters();
-    }, [filters, customers]);
-
-    const fetchCustomers = async () => {
-        try {
-            const response = await api.get('/customers');
-            console.log('Raw customers data:', response.data);
-            
-            // Đảm bảo dữ liệu không bị null/undefined
-            const processedCustomers = response.data.map(item => ({
-                ...item,
-                Fullname: item.Fullname || 'Không có tên',
-                Email: item.Email || 'Không có email',
-                Phone: item.Phone || 'Không có SĐT',
-                total_orders: parseInt(item.total_orders) || 0,
-                total_spend: parseFloat(item.total_spend) || 0,
-                address: item.address || 'Không có địa chỉ'
-            }));
-            
-            console.log('Processed customers:', processedCustomers);
-            
-            setCustomers(processedCustomers);
-            setFilteredCustomers(processedCustomers);
-            setLoading(false);
-        } catch (err) {
-            setError(err.message);
-            setLoading(false);
-        }
-    };
-
-    // Hàm áp dụng bộ lọc
-    const applyFilters = () => {
+    // Hàm áp dụng bộ lọc - Sử dụng useCallback
+    const applyFilters = useCallback(() => {
         let result = [...customers];
         
         // Lọc theo từ khóa tìm kiếm
@@ -101,6 +69,38 @@ const Customers = () => {
         }
         
         setFilteredCustomers(result);
+    }, [customers, filters.searchTerm, filters.minOrders, filters.minSpend, filters.maxSpend]); // Thêm dependencies
+
+    // Áp dụng bộ lọc khi filters thay đổi
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]); // Thêm applyFilters vào dependency array
+
+    const fetchCustomers = async () => {
+        try {
+            const response = await api.get('/customers');
+            console.log('Raw customers data:', response.data);
+            
+            // Đảm bảo dữ liệu không bị null/undefined
+            const processedCustomers = response.data.map(item => ({
+                ...item,
+                Fullname: item.Fullname || 'Không có tên',
+                Email: item.Email || 'Không có email',
+                Phone: item.Phone || 'Không có SĐT',
+                total_orders: parseInt(item.total_orders) || 0,
+                total_spend: parseFloat(item.total_spend) || 0,
+                address: item.address || 'Không có địa chỉ'
+            }));
+            
+            console.log('Processed customers:', processedCustomers);
+            
+            setCustomers(processedCustomers);
+            setFilteredCustomers(processedCustomers);
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
     };
 
     const handleFilterChange = (field, value) => {
@@ -385,7 +385,7 @@ const Customers = () => {
                 :global(td) {
                     padding: 12px;
                     border-bottom: 1px solid #374151;
-                    color: #e5e7eb;
+                    color: '#e5e7eb';
                 }
 
                 :global(tr:hover) {

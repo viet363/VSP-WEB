@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Table from '../components/table/Table.jsx';
 import api from '../api';
 
@@ -27,7 +27,7 @@ export default function Warehouses() {
     managerId: ''
   });
 
-  const fetchWarehouses = async () => {
+  const fetchWarehouses = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/warehouses');
@@ -49,29 +49,24 @@ export default function Warehouses() {
       alert('Không thể tải dữ liệu kho');
     }
     setLoading(false);
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await api.get('/users');
       setUsers(res.data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
     }
-  };
+  }, []);
 
   useEffect(() => { 
     fetchWarehouses();
     fetchUsers();
-  }, []);
+  }, [fetchWarehouses, fetchUsers]);
 
-  // Áp dụng bộ lọc khi filters thay đổi
-  useEffect(() => {
-    applyFilters();
-  }, [filters, warehouses]);
-
-  // Hàm áp dụng bộ lọc
-  const applyFilters = () => {
+  // Hàm áp dụng bộ lọc - Sử dụng useCallback
+  const applyFilters = useCallback(() => {
     let result = [...warehouses];
     
     // Lọc theo từ khóa tìm kiếm
@@ -94,12 +89,17 @@ export default function Warehouses() {
     // Lọc theo quản lý
     if (filters.managerId) {
       result = result.filter(warehouse => 
-        warehouse.UserId == filters.managerId
+        warehouse.UserId === filters.managerId
       );
     }
     
     setFilteredWarehouses(result);
-  };
+  }, [warehouses, filters.searchTerm, filters.location, filters.managerId]);
+
+  // Áp dụng bộ lọc khi filters thay đổi
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
@@ -548,7 +548,7 @@ export default function Warehouses() {
           display: block;
           margin-bottom: 6px;
           font-weight: 500;
-          color: #e5e7eb;
+          color: '#e5e7eb';
         }
         
         .form-actions {

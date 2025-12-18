@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // Thêm useCallback
 import Table from '../components/table/Table';
 import api from '../api';
 
@@ -48,10 +48,25 @@ const Categories = () => {
         fetchCategories();
     }, []);
 
+    // Hàm áp dụng bộ lọc - Sử dụng useCallback để tránh tạo hàm mới mỗi lần render
+    const applyFilters = useCallback(() => {
+        let result = [...categories];
+        
+        // Lọc theo từ khóa tìm kiếm
+        if (filters.searchTerm) {
+            const searchTerm = filters.searchTerm.toLowerCase();
+            result = result.filter(category => 
+                category.Category_name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        setFilteredCategories(result);
+    }, [categories, filters.searchTerm]); // Thêm dependencies
+
     // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
-    }, [filters, categories]);
+    }, [applyFilters]); // Thêm applyFilters vào dependency array
 
     const fetchCategories = async () => {
         try {
@@ -74,21 +89,6 @@ const Categories = () => {
             setError(err.message);
             setLoading(false);
         }
-    };
-
-    // Hàm áp dụng bộ lọc
-    const applyFilters = () => {
-        let result = [...categories];
-        
-        // Lọc theo từ khóa tìm kiếm
-        if (filters.searchTerm) {
-            const searchTerm = filters.searchTerm.toLowerCase();
-            result = result.filter(category => 
-                category.Category_name.toLowerCase().includes(searchTerm)
-            );
-        }
-        
-        setFilteredCategories(result);
     };
 
     const handleFilterChange = (field, value) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Table from '../components/table/Table';
 import api from '../api';
 
@@ -40,11 +40,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
     const [selectedSpec, setSelectedSpec] = useState('');
     const [useAvailableSpec, setUseAvailableSpec] = useState(false);
 
-    useEffect(() => {
-        fetchSpecsData();
-    }, [productId, categoryId]);
-
-    const fetchSpecsData = async () => {
+    const fetchSpecsData = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -81,7 +77,11 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
             console.error('Error fetching specs:', err);
             setLoading(false);
         }
-    };
+    }, [productId, categoryId]);
+
+    useEffect(() => {
+        fetchSpecsData();
+    }, [fetchSpecsData]);
 
     const handleAddSpec = () => {
         if (useAvailableSpec && selectedSpec) {
@@ -124,48 +124,48 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
         setSpecs(newSpecs);
     };
 
- const handleSave = async () => {
-    try {
-        // Chuẩn bị dữ liệu theo đúng format của Postman
-        const specsToSave = specs.map(spec => ({
-            key: (spec.key || '').trim(),
-            value: (spec.value || '').trim()
-        })).filter(spec => spec.key !== '');
+    const handleSave = async () => {
+        try {
+            // Chuẩn bị dữ liệu theo đúng format của Postman
+            const specsToSave = specs.map(spec => ({
+                key: (spec.key || '').trim(),
+                value: (spec.value || '').trim()
+            })).filter(spec => spec.key !== '');
 
-        console.log('Sending data:', specsToSave);
-        console.log('Full URL will be:', `${api.defaults.baseURL}/specs/products/${productId}/specs`);
+            console.log('Sending data:', specsToSave);
+            console.log('Full URL will be:', `${api.defaults.baseURL}/specs/products/${productId}/specs`);
 
-        // Gọi API với format đúng
-        const response = await api.post(`/specs/products/${productId}/specs`, {
-            specs: specsToSave
-        });
-        
-        console.log('Save response:', response.data);
-        alert('Lưu thông số thành công!');
-        onSave();
-        onClose();
-    } catch (err) {
-        console.error('=== ERROR DETAILS ===');
-        console.error('Full Error:', err);
-        console.error('Request Config:', {
-            url: err.config?.url,
-            baseURL: err.config?.baseURL,
-            method: err.config?.method,
-            data: err.config?.data ? JSON.parse(err.config.data) : null
-        });
-        
-        if (err.response) {
-            console.error('Response Status:', err.response.status);
-            console.error('Response Data:', err.response.data);
-            console.error('Response Headers:', err.response.headers);
-        } else if (err.request) {
-            console.error('No response received:', err.request);
+            // Gọi API với format đúng
+            const response = await api.post(`/specs/products/${productId}/specs`, {
+                specs: specsToSave
+            });
+            
+            console.log('Save response:', response.data);
+            alert('Lưu thông số thành công!');
+            onSave();
+            onClose();
+        } catch (err) {
+            console.error('=== ERROR DETAILS ===');
+            console.error('Full Error:', err);
+            console.error('Request Config:', {
+                url: err.config?.url,
+                baseURL: err.config?.baseURL,
+                method: err.config?.method,
+                data: err.config?.data ? JSON.parse(err.config.data) : null
+            });
+            
+            if (err.response) {
+                console.error('Response Status:', err.response.status);
+                console.error('Response Data:', err.response.data);
+                console.error('Response Headers:', err.response.headers);
+            } else if (err.request) {
+                console.error('No response received:', err.request);
+            }
+            console.error('END ERROR DETAILS');
+            
+            alert(`Lỗi khi lưu thông số: ${err.response?.data?.message || err.message}`);
         }
-        console.error('END ERROR DETAILS');
-        
-        alert(`Lỗi khi lưu thông số: ${err.response?.data?.message || err.message}`);
-    }
-};
+    };
 
     if (loading) {
         return (
@@ -564,16 +564,7 @@ const Products = () => {
         model: ''
     });
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    // Áp dụng bộ lọc khi filters thay đổi
-    useEffect(() => {
-        applyFilters();
-    }, [filters, products]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             console.log('Fetching products and categories...');
             const [productsRes, categoriesRes] = await Promise.all([
@@ -606,10 +597,14 @@ const Products = () => {
             setError(err.message);
             setLoading(false);
         }
-    };
+    }, []);
 
-    // Hàm áp dụng bộ lọc
-    const applyFilters = () => {
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Hàm áp dụng bộ lọc - Sử dụng useCallback
+    const applyFilters = useCallback(() => {
         let result = [...products];
         
         // Lọc theo từ khóa tìm kiếm
@@ -624,7 +619,7 @@ const Products = () => {
         
         if (filters.categoryId) {
             result = result.filter(product => 
-                product.CategoryId == filters.categoryId
+                product.CategoryId === filters.categoryId
             );
         }
         
@@ -649,7 +644,13 @@ const Products = () => {
         }
         
         setFilteredProducts(result);
-    };
+    }, [products, filters.searchTerm, filters.categoryId, 
+        filters.priceRange.min, filters.priceRange.max, filters.status]);
+
+    // Áp dụng bộ lọc khi filters thay đổi
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => {

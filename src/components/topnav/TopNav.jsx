@@ -1,4 +1,3 @@
-import React from 'react'
 
 import './topnav.css'
 
@@ -8,20 +7,13 @@ import Dropdown from '../dropdown/Dropdown'
 
 import ThemeMenu from '../thememenu/ThemeMenu'
 
-import notifications from '../../assets/JsonData/notification.json'
-
 import user_menu from '../../assets/JsonData/user_menus.json'
 
 const curr_user = {
  
 }
 
-const renderNotificationItem = (item, index) => (
-    <div className="notification-item" key={index}>
-        <i className={item.icon}></i>
-        <span>{item.content}</span>
-    </div>
-)
+
 
 const renderUserToggle = (user) => (
     <div className="topnav__right-user">
@@ -49,7 +41,6 @@ const Topnav = () => {
             
             <div className="topnav__right">
                 <div className="topnav__right-item">
-                    {/* dropdown here */}
                     <Dropdown
                         customToggle={() => renderUserToggle(curr_user)}
                         contentData={user_menu}
@@ -58,7 +49,6 @@ const Topnav = () => {
                 </div>
                 <div className="topnav__right-item">
                   
-                    {/* dropdown here */}
                 </div>
                 <div className="topnav__right-item">
                     <ThemeMenu/>
