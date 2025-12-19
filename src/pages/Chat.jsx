@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:4000/api/chat";
+const API_BASE_URL = "https://serverdatn.vercel.app/api/chat/";
 
 const Chat = () => {
   const [users, setUsers] = useState([]);
