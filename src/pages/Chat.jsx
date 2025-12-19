@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "https://serverdatn.vercel.app/api/chat/";
+const API_BASE_URL = "https://serverdatn.vercel.app/api";
 
 const Chat = () => {
   const [users, setUsers] = useState([]);
@@ -20,7 +20,7 @@ const Chat = () => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.get(`${API_BASE_URL}/users`);
+      const res = await axios.get(`${API_BASE_URL}/chat/users`);
       
       console.log("Users response:", res.data);
 
