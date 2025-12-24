@@ -35,7 +35,6 @@ const Orders = () => {
         }
     });
 
-    // MODAL DETAIL
     const [showModal, setShowModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [orderItems, setOrderItems] = useState([]);
@@ -44,11 +43,9 @@ const Orders = () => {
         fetchOrders();
     }, []);
 
-    // Hàm áp dụng bộ lọc - Sử dụng useCallback
     const applyFilters = useCallback(() => {
         let result = [...orders];
         
-        // Lọc theo từ khóa tìm kiếm
         if (filters.searchTerm) {
             const searchTerm = filters.searchTerm.toLowerCase();
             result = result.filter(order => 
@@ -57,21 +54,18 @@ const Orders = () => {
             );
         }
         
-        // Lọc theo trạng thái
         if (filters.status) {
             result = result.filter(order => 
                 order.Order_status === filters.status
             );
         }
         
-        // Lọc theo phương thức thanh toán
         if (filters.paymentType) {
             result = result.filter(order => 
                 order.Payment_type === filters.paymentType
             );
         }
         
-        // Lọc theo ngày
         if (filters.dateRange.start) {
             const startDate = new Date(filters.dateRange.start);
             result = result.filter(order => 
@@ -87,7 +81,6 @@ const Orders = () => {
             );
         }
         
-        // Lọc theo tổng tiền
         if (filters.amountRange.min !== '') {
             const minAmount = parseFloat(filters.amountRange.min);
             result = result.filter(order => 
@@ -107,17 +100,15 @@ const Orders = () => {
         filters.dateRange.start, filters.dateRange.end, 
         filters.amountRange.min, filters.amountRange.max]);
 
-    // Áp dụng bộ lọc khi filters thay đổi
     useEffect(() => {
         applyFilters();
-    }, [applyFilters]); // Thêm applyFilters vào dependency array
+    }, [applyFilters]); 
 
     const fetchOrders = async () => {
         try {
             const response = await api.get('/orders');
             console.log('Raw orders data:', response.data);
             
-            // Đảm bảo dữ liệu không bị null/undefined
             const processedOrders = response.data.map(item => ({
                 ...item,
                 customer_name: item.customer_name || 'Không có tên',
@@ -323,7 +314,6 @@ const Orders = () => {
                         </select>
                     </div>
 
-                    {/* Lọc theo phương thức thanh toán */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Thanh toán:
@@ -364,7 +354,6 @@ const Orders = () => {
                         </div>
                     </div>
 
-                    {/* Lọc theo tổng tiền */}
                     <div className="filter-group">
                         <label style={{ display: 'block', marginBottom: '5px', color: '#e5e7eb' }}>
                             Tổng tiền:

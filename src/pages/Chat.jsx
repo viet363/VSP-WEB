@@ -58,7 +58,7 @@ const Chat = () => {
       
       try {
         const res = await axios.get(
-          `${API_BASE_URL}/user/${userId}`
+          `${API_BASE_URL}/chat/user/${userId}`
         );
 
         if (res.data.success) {
@@ -117,7 +117,7 @@ const Chat = () => {
       setNewMessage("");
 
       await axios.post(
-        `${API_BASE_URL}/admin/send`,
+        `${API_BASE_URL}/chat/admin/send`,
         {
           userId: selectedUser.Id,
           message: newMessage,
