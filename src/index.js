@@ -15,7 +15,7 @@ import App from './App';
 
 const store = createStore(rootReducer);
 
-document.title = 'Shop bán hàng';
+document.title = 'VSP-Admin';
 
 ReactDOM.render(
   <Provider store={store}>
