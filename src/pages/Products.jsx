@@ -22,8 +22,8 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
     }
 
     return (
-        <img 
-            src={src} 
+        <img
+            src={src}
             alt={alt}
             onError={() => setImgError(true)}
             {...props}
@@ -43,21 +43,21 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
     const fetchSpecsData = useCallback(async () => {
         try {
             setLoading(true);
-            
+
             // Lấy thông số của sản phẩm
             const productSpecsRes = await api.get(`/specs/product/${productId}`);
             console.log('Product specs API response:', productSpecsRes.data);
-            
+
             // Chuyển đổi dữ liệu từ API về định dạng phù hợp
             const processedSpecs = (productSpecsRes.data || []).map(item => ({
                 Id: item.Id,
                 key: item.Spec_key || '',
                 value: item.Spec_value || ''
             }));
-            
+
             console.log('Processed specs:', processedSpecs);
             setSpecs(processedSpecs);
-            
+
             // Lấy thông số mẫu từ danh mục
             if (categoryId) {
                 try {
@@ -71,7 +71,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
             } else {
                 setAvailableSpecs([]);
             }
-            
+
             setLoading(false);
         } catch (err) {
             console.error('Error fetching specs:', err);
@@ -90,8 +90,8 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
             if (selectedSpecObj) {
                 const specExists = specs.find(s => s.key === selectedSpecObj.Spec_name);
                 if (!specExists) {
-                    setSpecs([...specs, { 
-                        key: selectedSpecObj.Spec_name, 
+                    setSpecs([...specs, {
+                        key: selectedSpecObj.Spec_name,
                         value: '',
                         Id: null // Tạo mới nên không có Id
                     }]);
@@ -102,8 +102,8 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
             // Thêm thông số tùy chỉnh
             const specExists = specs.find(s => s.key === newSpec.Spec_key);
             if (!specExists) {
-                setSpecs([...specs, { 
-                    key: newSpec.Spec_key, 
+                setSpecs([...specs, {
+                    key: newSpec.Spec_key,
                     value: newSpec.Spec_value,
                     Id: null // Tạo mới nên không có Id
                 }]);
@@ -139,7 +139,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
             const response = await api.post(`/specs/products/${productId}/specs`, {
                 specs: specsToSave
             });
-            
+
             console.log('Save response:', response.data);
             alert('Lưu thông số thành công!');
             onSave();
@@ -153,7 +153,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                 method: err.config?.method,
                 data: err.config?.data ? JSON.parse(err.config.data) : null
             });
-            
+
             if (err.response) {
                 console.error('Response Status:', err.response.status);
                 console.error('Response Data:', err.response.data);
@@ -162,7 +162,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                 console.error('No response received:', err.request);
             }
             console.error('END ERROR DETAILS');
-            
+
             alert(`Lỗi khi lưu thông số: ${err.response?.data?.message || err.message}`);
         }
     };
@@ -188,11 +188,11 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                     </h3>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
-                
+
                 <div className="modal-body">
                     <div className="add-spec-section">
                         <h4 style={{ color: '#e5e7eb', marginBottom: '15px' }}>Thêm thông số mới</h4>
-                        
+
                         {availableSpecs.length > 0 && (
                             <div style={{ marginBottom: '15px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
@@ -206,7 +206,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                                         Sử dụng thông số mẫu
                                     </label>
                                 </div>
-                                
+
                                 {useAvailableSpec && (
                                     <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                                         <select
@@ -240,7 +240,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                                 )}
                             </div>
                         )}
-                        
+
                         {(!useAvailableSpec || availableSpecs.length === 0) && (
                             <div className="custom-spec-input">
                                 <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
@@ -289,7 +289,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                         <h4 style={{ color: '#e5e7eb', marginBottom: '15px' }}>
                             Danh sách thông số ({specs.length})
                         </h4>
-                        
+
                         {specs.length === 0 ? (
                             <div style={{ color: '#9ca3af', textAlign: 'center', padding: '20px', border: '1px dashed #4b5563', borderRadius: '6px' }}>
                                 Chưa có thông số nào. Hãy thêm thông số cho sản phẩm.
@@ -358,7 +358,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                         )}
                     </div>
                 </div>
-                
+
                 <div className="modal-footer">
                     <button onClick={handleSave} className="btn-spec-save">
                         Lưu thông số
@@ -368,7 +368,7 @@ const SpecsModal = ({ productId, productName, categoryId, onClose, onSave }) => 
                     </button>
                 </div>
             </div>
-            
+
             <style jsx>{`
                 .modal-overlay {
                     position: fixed;
@@ -542,7 +542,7 @@ const Products = () => {
     const [selectedProductId, setSelectedProductId] = useState(null);
     const [selectedProductName, setSelectedProductName] = useState('');
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-    
+
     // State cho bộ lọc
     const [filters, setFilters] = useState({
         searchTerm: '',
@@ -571,10 +571,10 @@ const Products = () => {
                 api.get('/products'),
                 api.get('/categories')
             ]);
-            
+
             console.log('Raw products data:', productsRes.data);
             console.log('Categories data:', categoriesRes.data);
-            
+
             // Đảm bảo dữ liệu không bị null/undefined
             const processedProducts = productsRes.data.map(item => ({
                 ...item,
@@ -584,9 +584,9 @@ const Products = () => {
                 picUrl: item.picUrl || '',
                 Price: parseFloat(item.Price || 0)
             }));
-            
+
             console.log('Processed products:', processedProducts);
-            
+
             setProducts(processedProducts);
             setFilteredProducts(processedProducts); // Khởi tạo filteredProducts
             setCategories(categoriesRes.data);
@@ -606,45 +606,46 @@ const Products = () => {
     // Hàm áp dụng bộ lọc - Sử dụng useCallback
     const applyFilters = useCallback(() => {
         let result = [...products];
-        
+
         // Lọc theo từ khóa tìm kiếm
         if (filters.searchTerm) {
             const searchTerm = filters.searchTerm.toLowerCase();
-            result = result.filter(product => 
+            result = result.filter(product =>
                 product.Product_name.toLowerCase().includes(searchTerm) ||
                 (product.model && product.model.toLowerCase().includes(searchTerm)) ||
                 (product.Description && product.Description.toLowerCase().includes(searchTerm))
             );
         }
-        
+
         if (filters.categoryId) {
-            result = result.filter(product => 
-                product.CategoryId === filters.categoryId
+            const categoryIdNum = Number(filters.categoryId);
+            result = result.filter(product =>
+                Number(product.CategoryId) === categoryIdNum
             );
         }
-        
+
         if (filters.priceRange.min !== '') {
             const minPrice = parseFloat(filters.priceRange.min);
-            result = result.filter(product => 
+            result = result.filter(product =>
                 product.Price >= minPrice
             );
         }
-        
+
         if (filters.priceRange.max !== '') {
             const maxPrice = parseFloat(filters.priceRange.max);
-            result = result.filter(product => 
+            result = result.filter(product =>
                 product.Price <= maxPrice
             );
         }
-        
+
         if (filters.status) {
-            result = result.filter(product => 
+            result = result.filter(product =>
                 product.Product_status === filters.status
             );
         }
-        
+
         setFilteredProducts(result);
-    }, [products, filters.searchTerm, filters.categoryId, 
+    }, [products, filters.searchTerm, filters.categoryId,
         filters.priceRange.min, filters.priceRange.max, filters.status]);
 
     // Áp dụng bộ lọc khi filters thay đổi
@@ -765,7 +766,7 @@ const Products = () => {
                 alert('Cập nhật sản phẩm thành công!');
             } else {
                 const result = await api.post('/products', product);
-                setCurrentId(result.data.id); 
+                setCurrentId(result.data.id);
                 alert('Thêm sản phẩm thành công!');
             }
             setShowForm(false);
@@ -776,10 +777,10 @@ const Products = () => {
     };
 
     const renderHead = (item, index) => <th key={index}>{item}</th>;
-    
+
     const renderBody = (item, index) => {
         console.log('Rendering product item:', item);
-        
+
         // Đảm bảo không bị lỗi với giá trị null/undefined
         const productName = item.Product_name || 'Không có tên';
         const productStatus = item.Product_status || 'Draft';
@@ -799,23 +800,23 @@ const Products = () => {
                         borderRadius: '4px',
                         fontSize: '12px',
                         fontWeight: '500',
-                        backgroundColor: 
+                        backgroundColor:
                             productStatus === 'Published' ? '#10b981' :
-                            productStatus === 'Draft' ? '#f59e0b' :
-                            productStatus === 'OutOfStock' ? '#ef4444' :
-                            productStatus === 'Archived' ? '#6b7280' : '#3b82f6',
+                                productStatus === 'Draft' ? '#f59e0b' :
+                                    productStatus === 'OutOfStock' ? '#ef4444' :
+                                        productStatus === 'Archived' ? '#6b7280' : '#3b82f6',
                         color: 'white'
                     }}>
                         {productStatus}
                     </span>
                 </td>
                 <td>
-                    <ImageWithFallback 
+                    <ImageWithFallback
                         src={imageUrl}
                         alt={productName}
-                        style={{ 
-                            width: 50, 
-                            height: 50, 
+                        style={{
+                            width: 50,
+                            height: 50,
                             objectFit: 'cover',
                             borderRadius: '4px',
                             border: '1px solid #374151'
@@ -932,7 +933,7 @@ const Products = () => {
                         </button>
                     </div>
                 </div>
-                
+
                 {/* Thông tin kết quả lọc */}
                 <div style={{ marginTop: '10px', color: '#9ca3af', fontSize: '14px' }}>
                     Đang hiển thị {filteredProducts.length} / {products.length} sản phẩm
@@ -944,24 +945,24 @@ const Products = () => {
                     <h3 style={{ color: '#f9fafb', marginTop: 0 }}>{editMode ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
                     <form onSubmit={handleSubmit}>
                         <label>Tên sản phẩm:</label>
-                        <input 
-                            type="text" 
-                            name="Product_name" 
-                            value={product.Product_name} 
-                            onChange={handleChange} 
-                            required 
+                        <input
+                            type="text"
+                            name="Product_name"
+                            value={product.Product_name}
+                            onChange={handleChange}
+                            required
                             placeholder="Nhập tên sản phẩm"
                         />
 
                         <label>Giá:</label>
-                        <input 
-                            type="number" 
-                            name="Price" 
-                            value={product.Price} 
-                            onChange={handleChange} 
-                            required 
-                            min="0" 
-                            step="0.01" 
+                        <input
+                            type="number"
+                            name="Price"
+                            value={product.Price}
+                            onChange={handleChange}
+                            required
+                            min="0"
+                            step="0.01"
                             placeholder="Nhập giá sản phẩm"
                         />
 
@@ -982,40 +983,40 @@ const Products = () => {
                         </select>
 
                         <label>URL hình ảnh:</label>
-                        <input 
-                            type="text" 
-                            name="picUrl" 
-                            value={product.picUrl} 
-                            onChange={handleChange} 
+                        <input
+                            type="text"
+                            name="picUrl"
+                            value={product.picUrl}
+                            onChange={handleChange}
                             placeholder="https://example.com/image.jpg"
                         />
 
                         <label>Mô tả:</label>
-                        <textarea 
-                            name="Description" 
-                            value={product.Description} 
-                            onChange={handleChange} 
-                            rows="3" 
+                        <textarea
+                            name="Description"
+                            value={product.Description}
+                            onChange={handleChange}
+                            rows="3"
                             placeholder="Nhập mô tả sản phẩm"
                         />
 
                         <label>Model:</label>
-                        <input 
-                            type="text" 
-                            name="model" 
-                            value={product.model} 
-                            onChange={handleChange} 
+                        <input
+                            type="text"
+                            name="model"
+                            value={product.model}
+                            onChange={handleChange}
                             placeholder="Nhập model sản phẩm"
                         />
 
                         {product.picUrl && (
                             <div>
                                 <label>Preview:</label>
-                                <ImageWithFallback 
+                                <ImageWithFallback
                                     src={product.picUrl}
                                     alt="preview"
-                                    style={{ 
-                                        width: 100, 
+                                    style={{
+                                        width: 100,
                                         marginTop: 10,
                                         borderRadius: '4px',
                                         border: '1px solid #374151'
@@ -1026,8 +1027,8 @@ const Products = () => {
 
                         <div className="form-actions">
                             <button type="submit" className="btn-submit">Lưu</button>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={handleOpenSpecsFromForm}
                                 className="btn-specs"
                                 disabled={!editMode}

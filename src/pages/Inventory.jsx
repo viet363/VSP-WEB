@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react'; 
+import React, { useEffect, useState, useCallback } from 'react';
 import Table from '../components/table/Table.jsx';
 import api from '../api';
 import { useHistory } from 'react-router-dom';
 
-const headData = ['STT','ID','Sản phẩm','Kho','Tồn','Ngưỡng','Trạng thái','Hành động'];
+const headData = ['STT', 'ID', 'Sản phẩm', 'Kho', 'Tồn', 'Ngưỡng', 'Trạng thái', 'Hành động'];
 const renderHead = (item, index) => <th key={index}>{item}</th>;
 
 export default function Inventory() {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  const [, setProducts] = useState([]); 
+  const [, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -38,9 +38,9 @@ export default function Inventory() {
         api.get('/warehouses'),
         api.get('/products')
       ]);
-      
+
       console.log('Raw inventory data:', invRes.data);
-      
+
       const processedRows = invRes.data.map(item => ({
         ...item,
         Product_name: item.Product_name || 'Không có tên',
@@ -50,9 +50,9 @@ export default function Inventory() {
         ProductId: item.ProductId || item.productId,
         WarehouseId: item.WarehouseId || item.warehouseId
       }));
-      
+
       console.log('Processed inventory:', processedRows);
-      
+
       setRows(processedRows);
       setFilteredRows(processedRows);
       setWarehouses(whRes.data || []);
@@ -64,61 +64,59 @@ export default function Inventory() {
     setLoading(false);
   };
 
-  useEffect(() => { 
-    fetchData(); 
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const applyFilters = useCallback(() => {
-    let result = [...rows];
-    
-    if (filters.searchTerm) {
-      const searchTerm = filters.searchTerm.toLowerCase();
-      result = result.filter(row => 
-        row.Product_name.toLowerCase().includes(searchTerm) ||
-        row.Warehouse_name.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (filters.warehouseId) {
-      result = result.filter(row => 
-        row.WarehouseId === filters.warehouseId 
-      );
-    }
-    
-    if (filters.status) {
-      if (filters.status === 'low') {
-        result = result.filter(row => row.Stock < row.Min_stock);
-      } else if (filters.status === 'warning') {
-        result = result.filter(row => row.Stock === row.Min_stock);
-      } else if (filters.status === 'ok') {
-        result = result.filter(row => row.Stock > row.Min_stock);
-      } else if (filters.status === 'critical') {
-        result = result.filter(row => row.Stock <= Math.floor(row.Min_stock * 0.5));
-      }
-    }
-    
-    if (filters.stockRange.min !== '') {
-      const minStock = parseInt(filters.stockRange.min);
-      result = result.filter(row => row.Stock >= minStock);
-    }
-    
-    if (filters.stockRange.max !== '') {
-      const maxStock = parseInt(filters.stockRange.max);
-      result = result.filter(row => row.Stock <= maxStock);
-    }
-    
-    if (filters.minStockRange.min !== '') {
-      const minThreshold = parseInt(filters.minStockRange.min);
-      result = result.filter(row => row.Min_stock >= minThreshold);
-    }
-    
-    if (filters.minStockRange.max !== '') {
-      const maxThreshold = parseInt(filters.minStockRange.max);
-      result = result.filter(row => row.Min_stock <= maxThreshold);
-    }
-    
-    setFilteredRows(result);
-  }, [rows, filters.searchTerm, filters.warehouseId, filters.status, filters.stockRange.min, filters.stockRange.max, filters.minStockRange.min, filters.minStockRange.max]);
+  let result = [...rows];
+
+  if (filters.searchTerm) {
+    const term = filters.searchTerm.toLowerCase();
+    result = result.filter(row =>
+      row.Product_name.toLowerCase().includes(term) ||
+      row.Warehouse_name.toLowerCase().includes(term)
+    );
+  }
+
+  if (filters.warehouseId) {
+  const selectedWarehouse = warehouses.find(
+    w => String(w.Id) === String(filters.warehouseId)
+  );
+
+  if (selectedWarehouse) {
+    result = result.filter(
+      row => row.Warehouse_name === selectedWarehouse.Warehouse_name
+    );
+  }
+}
+
+  if (filters.status === 'critical') {
+    result = result.filter(row => row.Stock <= row.Min_stock * 0.5);
+  } else if (filters.status === 'low') {
+    result = result.filter(row => row.Stock < row.Min_stock);
+  } else if (filters.status === 'warning') {
+    result = result.filter(row => row.Stock === row.Min_stock);
+  } else if (filters.status === 'ok') {
+    result = result.filter(row => row.Stock > row.Min_stock);
+  }
+
+  const minStock = Number(filters.stockRange.min || 0);
+  const maxStock = Number(filters.stockRange.max || Infinity);
+
+  result = result.filter(
+    row => row.Stock >= minStock && row.Stock <= maxStock
+  );
+
+  const minThreshold = Number(filters.minStockRange.min || 0);
+  const maxThreshold = Number(filters.minStockRange.max || Infinity);
+
+  result = result.filter(
+    row => row.Min_stock >= minThreshold && row.Min_stock <= maxThreshold
+  );
+
+  setFilteredRows(result);
+}, [rows,warehouses, filters.searchTerm, filters.warehouseId, filters.status, filters.stockRange.min, filters.stockRange.max, filters.minStockRange.min, filters.minStockRange.max]);
 
   useEffect(() => {
     applyFilters();
@@ -176,7 +174,7 @@ export default function Inventory() {
   const renderBody = (item, index) => {
     const stockStatus = getStockStatus(item.Stock, item.Min_stock);
     const stockPercentage = item.Min_stock > 0 ? Math.round((item.Stock / item.Min_stock) * 100) : 100;
-    
+
     return (
       <tr key={item.Id}>
         <td>{index + 1}</td>
@@ -193,9 +191,9 @@ export default function Inventory() {
         </td>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ 
-              width: '60px', 
-              height: '6px', 
+            <div style={{
+              width: '60px',
+              height: '6px',
               backgroundColor: '#374151',
               borderRadius: '3px',
               overflow: 'hidden'
@@ -207,8 +205,8 @@ export default function Inventory() {
                 borderRadius: '3px'
               }} />
             </div>
-            <span style={{ 
-              color: stockStatus.color, 
+            <span style={{
+              color: stockStatus.color,
               fontWeight: '600',
               minWidth: '40px'
             }}>
@@ -235,14 +233,14 @@ export default function Inventory() {
           </span>
         </td>
         <td>
-          <button 
-            className="btn-import" 
+          <button
+            className="btn-import"
             onClick={() => handleImport(item.ProductId, item.WarehouseId)}
           >
             Nhập
           </button>
-          <button 
-            className="btn-export" 
+          <button
+            className="btn-export"
             onClick={() => handleExport(item.ProductId, item.WarehouseId)}
           >
             Xuất
@@ -257,7 +255,7 @@ export default function Inventory() {
     const lowStock = rows.filter(r => r.Stock < r.Min_stock).length;
     const warningStock = rows.filter(r => r.Stock === r.Min_stock).length;
     const okStock = rows.filter(r => r.Stock > r.Min_stock).length;
-    
+
     return { total, lowStock, warningStock, okStock };
   };
 
@@ -398,15 +396,15 @@ export default function Inventory() {
             <button
               onClick={resetFilters}
               className="btn-reset"
-              disabled={!filters.searchTerm && !filters.warehouseId && !filters.status && 
-                       !filters.stockRange.min && !filters.stockRange.max &&
-                       !filters.minStockRange.min && !filters.minStockRange.max}
+              disabled={!filters.searchTerm && !filters.warehouseId && !filters.status &&
+                !filters.stockRange.min && !filters.stockRange.max &&
+                !filters.minStockRange.min && !filters.minStockRange.max}
             >
               Xóa bộ lọc
             </button>
           </div>
         </div>
-        
+
         <div style={{ marginTop: '10px', color: '#9ca3af', fontSize: '14px' }}>
           Đang hiển thị {filteredRows.length} / {rows.length} sản phẩm
           {filters.status && ` • Trạng thái: ${filters.status}`}
@@ -420,11 +418,11 @@ export default function Inventory() {
               Không tìm thấy sản phẩm nào phù hợp với bộ lọc
             </div>
           ) : (
-            <Table 
-              limit="10" 
-              headData={headData} 
-              renderHead={renderHead} 
-              bodyData={filteredRows} 
+            <Table
+              limit="10"
+              headData={headData}
+              renderHead={renderHead}
+              bodyData={filteredRows}
               renderBody={renderBody}
             />
           )}
